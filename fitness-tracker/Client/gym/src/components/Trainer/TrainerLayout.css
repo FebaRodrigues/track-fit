@@ -1,0 +1,28 @@
+.trainer-layout {
+  display: flex;
+  min-height: 100vh;
+  background-color: #f5f5f5;
+}
+
+.trainer-main-content {
+  flex: 1;
+  margin-left: 250px;
+  padding: 20px;
+  min-height: 100vh;
+  background-color: #f5f5f5;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .trainer-main-content {
+    margin-left: 200px;
+    padding: 15px;
+  }
+}
+
+@media (max-width: 576px) {
+  .trainer-main-content {
+    margin-left: 60px;
+    padding: 10px;
+  }
+} 

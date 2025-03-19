@@ -1,0 +1,155 @@
+/* Remove spinner arrows from number inputs */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+input[type="number"] {
+    -moz-appearance: textfield; /* Firefox */
+}
+
+/* Button Styles */
+.trainer-auth-container, .trainer-register-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: #ebeef2; /* Blue background */
+  padding: 20px 0;
+  padding-top: 80px; /* Add padding to account for navbar */
+}
+
+/* Card Style */
+.trainer-auth-card, .trainer-register-box {
+  background: rgb(226, 223, 223);
+  padding: 20px;
+  width: 100%;
+  max-width: 400px;
+  border-radius: 8px;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+  text-align: center;
+  margin-top: 20px; /* Reduced from 80px since we added padding to container */
+}
+
+/* Trainer Dashboard Container */
+.trainer-dashboard-container {
+  padding: 20px;
+  padding-top: 80px; /* Add padding to account for navbar */
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Form Styles */
+form {
+  display: flex;
+  flex-direction: column;
+}
+
+label {
+  text-align: left;
+  font-weight: bold;
+  margin-bottom: 5px;
+  margin-top: 10px;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="file"],
+input[type="tel"],
+textarea,
+button {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 15px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 16px;
+}
+
+textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+input[type="file"] {
+  border: none;
+}
+
+button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+  margin-top: 10px;
+}
+
+button:hover {
+  background-color: #0056b3;
+}
+
+.auth-switch-text {
+  margin-top: 10px;
+  text-align: center;
+}
+
+.auth-switch-text a {
+  color: #0056b3;
+  font-weight: bold;
+  text-decoration: none;
+}
+
+.auth-switch-text a:hover {
+  text-decoration: underline;
+}
+
+.approval-notice {
+  margin-top: 15px;
+  padding: 10px;
+  background-color: #fff3cd;
+  border-left: 4px solid #ffc107;
+  color: #856404;
+  text-align: left;
+  font-size: 14px;
+  border-radius: 4px;
+}
+
+.error-message {
+  color: #dc3545;
+  background-color: #f8d7da;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 15px;
+  text-align: left;
+}
+
+/* Trainer Login Container */
+.trainer-login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: #ebeef2;
+  padding: 20px;
+  padding-top: 80px; /* Add padding to account for navbar */
+}
+
+.trainer-login-box {
+  background: rgb(226, 223, 223);
+  padding: 20px;
+  width: 100%;
+  max-width: 400px;
+  border-radius: 8px;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+  text-align: center;
+}
+
+/* Responsive Design */
+@media (max-width: 600px) {
+  .card, .trainer-register-box, .trainer-login-box {
+    max-width: 90%;
+  }
+}
+  

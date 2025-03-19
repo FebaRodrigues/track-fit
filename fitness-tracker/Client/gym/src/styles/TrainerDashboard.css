@@ -1,0 +1,95 @@
+/* TrainerDashboard.css */
+.trainer-dashboard {
+  min-height: 100vh;
+  background-color: #f5f5f5;
+}
+
+.stats-card {
+  transition: all 0.3s ease;
+  height: 100%;
+}
+
+.stats-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive adjustments */
+@media (max-width: 960px) {
+  .trainer-dashboard {
+    padding-bottom: 60px;
+  }
+}
+
+/* Animation for loading stats */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.stats-card {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+.stats-card:nth-child(1) {
+  animation-delay: 0.1s;
+}
+
+.stats-card:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.stats-card:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+.stats-card:nth-child(4) {
+  animation-delay: 0.4s;
+}
+
+/* Custom scrollbar for lists */
+.MuiList-root {
+  max-height: 400px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #bbbbbb #f5f5f5;
+}
+
+.MuiList-root::-webkit-scrollbar {
+  width: 8px;
+}
+
+.MuiList-root::-webkit-scrollbar-track {
+  background: #f5f5f5;
+}
+
+.MuiList-root::-webkit-scrollbar-thumb {
+  background-color: #bbbbbb;
+  border-radius: 4px;
+  border: 2px solid #f5f5f5;
+}
+
+/* Button hover effects */
+.MuiButton-contained {
+  transition: all 0.3s ease;
+}
+
+.MuiButton-contained:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Paper container styling */
+.MuiPaper-root {
+  transition: all 0.3s ease;
+}
+
+.MuiPaper-root:hover {
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+} 
