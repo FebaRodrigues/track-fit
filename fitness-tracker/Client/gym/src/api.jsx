@@ -1,7 +1,7 @@
 // src/api.jsx
 import axios from 'axios';
 import { resetPortDetection } from './utils/serverPortDetector';
-import { API_BASE_URL, ENV_INFO } from './utils/apiConfig';
+import { API_BASE_URL, ENV_INFO, getApiUrl } from './utils/apiConfig';
 
 // Function to get the server URL with the correct port
 export const getServerUrl = () => {
@@ -14,7 +14,7 @@ export const getServerUrl = () => {
 const API = axios.create({
     baseURL: API_BASE_URL,
     timeout: 10000,
-    withCredentials: true
+    withCredentials: ENV_INFO.useCorsProxy ? false : true // Don't use withCredentials when using CORS proxy
 });
 
 // Track server status
@@ -94,8 +94,21 @@ const showServerNotRunningMessage = () => {
 // Add request interceptor to update baseURL if needed
 API.interceptors.request.use(
     (config) => {
-        // Use API_BASE_URL from config
-        config.baseURL = API_BASE_URL;
+        // Update the URL to use the appropriate endpoint with CORS proxy if needed
+        if (ENV_INFO.isProduction && ENV_INFO.useCorsProxy) {
+            // Extract the endpoint from the URL
+            const baseUrlStr = API_BASE_URL.toString();
+            const urlPath = config.url;
+            
+            if (urlPath && !urlPath.includes(baseUrlStr)) {
+                // If it's a relative path, get the full URL using the helper
+                const fullUrl = getApiUrl(urlPath);
+                console.log(`Converting ${urlPath} to ${fullUrl} for CORS proxy`);
+                config.url = fullUrl;
+                config.baseURL = '';  // Clear baseURL to use the full URL
+            }
+        }
+        
         console.log(`API Request to: ${config.url}`);
         
         return config;
@@ -759,13 +772,27 @@ export const loginUser = async (email, password) => {
         
         console.log(`Attempting login with API_BASE_URL: ${API_BASE_URL}`);
         
+        // Get the full URL for the login endpoint
+        const loginUrl = ENV_INFO.useCorsProxy 
+            ? getApiUrl('users/login') 
+            : `${API_BASE_URL}/users/login`;
+            
+        console.log(`Login URL: ${loginUrl}`);
+        
         // Create a new axios instance for this request to ensure we use the configured URL
         const loginAPI = axios.create({
-            baseURL: API_BASE_URL,
-            timeout: 5000 // Longer timeout for login
+            timeout: 5000, // Longer timeout for login
+            withCredentials: ENV_INFO.useCorsProxy ? false : true // Don't use withCredentials when using CORS proxy
         });
         
-        const response = await loginAPI.post('/users/login', { email, password });
+        // Make the request directly to the URL instead of using baseURL
+        const response = await loginAPI.post(loginUrl, { email, password }, {
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            }
+        });
+        
         return response;
     } catch (error) {
         console.error('Login error:', error);
@@ -789,10 +816,17 @@ export const registerUser = async (data) => {
     try {
         console.log(`Attempting registration with API_BASE_URL: ${API_BASE_URL}`);
         
+        // Get the full URL for the register endpoint
+        const registerUrl = ENV_INFO.useCorsProxy 
+            ? getApiUrl('users/register') 
+            : `${API_BASE_URL}/users/register`;
+            
+        console.log(`Register URL: ${registerUrl}`);
+        
         // Create a new axios instance for this request
         const registerAPI = axios.create({
-            baseURL: API_BASE_URL,
-            timeout: 10000 // Longer timeout for registration with image upload
+            timeout: 10000, // Longer timeout for registration with image upload
+            withCredentials: ENV_INFO.useCorsProxy ? false : true // Don't use withCredentials when using CORS proxy
         });
         
         // Log the FormData contents for debugging
@@ -808,9 +842,10 @@ export const registerUser = async (data) => {
             }
         }
         
-        const response = await registerAPI.post('/users/register', data, {
+        const response = await registerAPI.post(registerUrl, data, {
             headers: {
-                'Content-Type': data instanceof FormData ? 'multipart/form-data' : 'application/json'
+                'Content-Type': data instanceof FormData ? 'multipart/form-data' : 'application/json',
+                'Accept': 'application/json'
             }
         });
         
