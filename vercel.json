@@ -14,46 +14,15 @@
       "use": "@vercel/node"
     }
   ],
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "/fitness-tracker/Server/server.js"
-    },
-    {
-      "src": "^/assets/(.*)",
-      "dest": "/fitness-tracker/Client/gym/dist/assets/$1"
-    },
-    {
-      "src": "^/test-diagnostic.html",
-      "dest": "/fitness-tracker/Client/gym/public/test-diagnostic.html"
-    },
-    {
-      "src": "^/_app-fallback.html",
-      "dest": "/fitness-tracker/Client/gym/public/_app-fallback.html"
-    },
-    {
-      "src": "^/favicon\\.ico",
-      "dest": "/fitness-tracker/Client/gym/dist/favicon.ico"
-    },
-    {
-      "src": "^/manifest\\.json",
-      "dest": "/fitness-tracker/Client/gym/dist/manifest.json"
-    },
-    {
-      "src": "^/robots\\.txt",
-      "dest": "/fitness-tracker/Client/gym/dist/robots.txt"
-    },
-    {
-      "handle": "filesystem"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/fitness-tracker/Client/gym/dist/index.html",
-      "headers": {
-        "Cache-Control": "no-cache, no-store, must-revalidate"
-      },
-      "continue": true
-    }
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/fitness-tracker/Server/server.js" },
+    { "source": "/assets/(.*)", "destination": "/fitness-tracker/Client/gym/dist/assets/$1" },
+    { "source": "/test-diagnostic.html", "destination": "/fitness-tracker/Client/gym/public/test-diagnostic.html" },
+    { "source": "/_app-fallback.html", "destination": "/fitness-tracker/Client/gym/public/_app-fallback.html" },
+    { "source": "/favicon.ico", "destination": "/fitness-tracker/Client/gym/dist/favicon.ico" },
+    { "source": "/manifest.json", "destination": "/fitness-tracker/Client/gym/dist/manifest.json" },
+    { "source": "/robots.txt", "destination": "/fitness-tracker/Client/gym/dist/robots.txt" },
+    { "source": "/(.*)", "destination": "/fitness-tracker/Client/gym/dist/index.html" }
   ],
   "headers": [
     {
@@ -68,6 +37,12 @@
       "source": "/assets/(.*)",
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+      ]
+    },
+    {
+      "source": "/(.*).html",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
       ]
     }
   ],
