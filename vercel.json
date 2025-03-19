@@ -19,8 +19,15 @@
       "dest": "fitness-tracker/Server/server.js"
     },
     {
+      "handle": "filesystem"
+    },
+    {
+      "src": "/assets/(.*)",
+      "dest": "fitness-tracker/Client/gym/dist/assets/$1"
+    },
+    {
       "src": "/(.*)",
-      "dest": "fitness-tracker/Client/gym/dist/$1"
+      "dest": "fitness-tracker/Client/gym/dist/index.html"
     }
   ]
 } 
