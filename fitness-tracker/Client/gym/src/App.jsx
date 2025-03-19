@@ -202,22 +202,56 @@ const router = createBrowserRouter(
 
 // Main App component
 const App = () => {
-  const [isPortDetected, setIsPortDetected] = useState(true); // Always consider port as detected
-  const [isLoading, setIsLoading] = useState(false); // Don't show loading screen
+  const [isPortDetected, setIsPortDetected] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Always use port 5050
-    console.log('Using fixed port 5050 as requested');
-    localStorage.setItem('serverPort', '5050');
-    setIsPortDetected(true);
-    setIsLoading(false);
+    // Detect environment and setup appropriate API configuration
+    async function setupEnvironment() {
+      try {
+        setIsLoading(true);
+        // Check if we're in production or development
+        const isProduction = window.location.hostname !== 'localhost';
+        
+        if (isProduction) {
+          console.log('Production environment detected, using relative API paths');
+          localStorage.setItem('useRelativeApi', 'true');
+          setIsPortDetected(true);
+        } else {
+          console.log('Development environment, detecting server port');
+          // Will use port 5050 in development
+          localStorage.setItem('serverPort', '5050');
+          localStorage.setItem('useRelativeApi', 'false');
+          setIsPortDetected(true);
+        }
+      } catch (error) {
+        console.error('Error setting up environment:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    // Setup environment on component mount
+    setupEnvironment();
     
-    // No need for visibility change listener since we're always using port 5050
+    // Add visibility change listener to check port when tab becomes visible
+    document.addEventListener('visibilitychange', handleVisibilityChange);
     
     return () => {
-      // No cleanup needed
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, []);
+  
+  // Handle visibility change to detect server when tab becomes visible
+  const handleVisibilityChange = () => {
+    if (document.visibilityState === 'visible') {
+      // Don't reset port detection in production
+      const isProduction = window.location.hostname !== 'localhost';
+      if (!isProduction) {
+        resetPortDetection(); // Only reset in development
+      }
+    }
+  };
 
   // Show loading indicator while detecting port
   if (isLoading) {
@@ -239,8 +273,8 @@ const App = () => {
           animation: 'spin 1s linear infinite',
           marginBottom: '20px'
         }}></div>
-        <h2>Connecting to server...</h2>
-        <p>Please wait while we establish a connection</p>
+        <h2>Loading application...</h2>
+        <p>Please wait while the application initializes</p>
         <style>{`
           @keyframes spin {
             0% { transform: rotate(0deg); }

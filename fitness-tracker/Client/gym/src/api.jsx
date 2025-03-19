@@ -4,8 +4,16 @@ import { resetPortDetection } from './utils/serverPortDetector';
 
 // Function to get the server URL with the correct port
 export const getServerUrl = () => {
-    // Always use port 5050 for the server
-    console.log('Using fixed port 5050 for server connection');
+    // Check if we're in production (Vercel deployment)
+    const useRelativeApi = localStorage.getItem('useRelativeApi') === 'true';
+    
+    if (useRelativeApi) {
+        console.log('Using relative API path for production');
+        return '/api';
+    }
+    
+    // For development, use localhost with port
+    console.log('Using localhost API for development');
     localStorage.setItem('serverPort', '5050');
     return 'http://localhost:5050/api';
 };
@@ -94,7 +102,7 @@ const showServerNotRunningMessage = () => {
 // Add request interceptor to update baseURL if needed
 API.interceptors.request.use(
     (config) => {
-        // Update baseURL on each request to ensure we're using the latest port
+        // Update baseURL on each request to ensure we're using the latest URL
         const baseUrl = getServerUrl();
         config.baseURL = baseUrl;
         console.log(`API Request to: ${baseUrl}${config.url}`);
@@ -114,10 +122,18 @@ API.interceptors.request.use(
 
 // Function to update the server port
 export const updateServerPort = (port) => {
-    // Always use port 5050 regardless of the port parameter
-    console.log(`Requested port update to ${port}, but using fixed port 5050 to maintain data consistency`);
-    localStorage.setItem('serverPort', '5050');
-    API.defaults.baseURL = 'http://localhost:5050/api';
+    // Check if we should use relative path (production) or localhost (dev)
+    const useRelativeApi = localStorage.getItem('useRelativeApi') === 'true';
+    
+    if (useRelativeApi) {
+        console.log('Setting API to use relative path for production');
+        API.defaults.baseURL = '/api';
+    } else {
+        console.log(`Setting API to use localhost:${port} for development`);
+        localStorage.setItem('serverPort', port.toString());
+        API.defaults.baseURL = `http://localhost:${port}/api`;
+    }
+    
     console.log(`API baseURL updated to: ${API.defaults.baseURL}`);
 };
 

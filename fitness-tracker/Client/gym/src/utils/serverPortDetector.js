@@ -14,11 +14,21 @@ export const detectServerPort = async () => {
     
     // Create a new promise for port detection
     portDetectionPromise = new Promise(async (resolve) => {
-        console.log('Attempting to detect server port...');
+        console.log('Detecting server endpoint...');
         
-        // Only try port 5050 (which is our target port)
+        // Check if we're in a production environment (Vercel deployment)
+        const isProduction = window.location.hostname !== 'localhost';
+        
+        if (isProduction) {
+            console.log('Production environment detected, using relative API paths');
+            localStorage.setItem('useRelativeApi', 'true');
+            resolve('production');
+            return 'production';
+        }
+        
+        // For development environment, try to connect to localhost:5050
         try {
-            console.log('Trying port 5050...');
+            console.log('Development environment, trying port 5050...');
             const response = await axios.get('http://localhost:5050/api/health', {
                 timeout: 5000 // Increased timeout for better chance of connection
             });
@@ -26,6 +36,7 @@ export const detectServerPort = async () => {
             if (response.status === 200 || response.status === 404) {
                 console.log('Server confirmed on port 5050');
                 localStorage.setItem('serverPort', '5050');
+                localStorage.setItem('useRelativeApi', 'false');
                 updateServerPort(5050);
                 resolve(5050);
                 return 5050;
@@ -34,16 +45,18 @@ export const detectServerPort = async () => {
             if (error.response) {
                 console.log('Server found on port 5050 (got response but not 200)');
                 localStorage.setItem('serverPort', '5050');
+                localStorage.setItem('useRelativeApi', 'false');
                 updateServerPort(5050);
                 resolve(5050);
                 return 5050;
             }
-            console.log('Port 5050 not responding, but will still use it');
+            console.log('Port 5050 not responding, but will still use it for development');
         }
         
-        // Always use port 5050 regardless of connection status
-        console.log('Using port 5050 as requested.');
+        // Default for development environment
+        console.log('Using port 5050 for development environment');
         localStorage.setItem('serverPort', '5050');
+        localStorage.setItem('useRelativeApi', 'false');
         updateServerPort(5050);
         resolve(5050);
         return 5050;
@@ -62,8 +75,18 @@ export const detectServerPort = async () => {
 export const resetPortDetection = () => {
     portDetectionPromise = null;
     localStorage.removeItem('serverPort');
-    localStorage.setItem('serverPort', '5050'); // Always set to 5050 when resetting
-    console.log('Port detection reset. Will use port 5050 on next call.');
+    localStorage.removeItem('useRelativeApi');
+    
+    // Check if we're in a production environment
+    const isProduction = window.location.hostname !== 'localhost';
+    if (isProduction) {
+        localStorage.setItem('useRelativeApi', 'true');
+    } else {
+        localStorage.setItem('serverPort', '5050');
+        localStorage.setItem('useRelativeApi', 'false');
+    }
+    
+    console.log('Port detection reset. Will detect environment on next call.');
 };
 
 export default detectServerPort; 
