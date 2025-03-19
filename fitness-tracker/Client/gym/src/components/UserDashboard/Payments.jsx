@@ -8,6 +8,7 @@ import { toast } from 'react-toastify';
 import useMembershipAccess from '../../hooks/useMembershipAccess';
 import '../../styles/Payments.css';
 import axios from 'axios';
+import { API_BASE_URL } from '../../utils/apiConfig';
 
 // Get the Stripe key from environment or use a placeholder in development
 const stripeKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || 'pk_test_placeholder';
@@ -465,8 +466,8 @@ const Payments = () => {
           // Try using fetch directly
           const token = localStorage.getItem('token');
           
-          // Try fetch API directly
-          const fetchResponse = await fetch('http://localhost:5050/api/payments', {
+          // Use API_BASE_URL instead of hardcoded localhost URL
+          const fetchResponse = await fetch(`${API_BASE_URL}/payments`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',

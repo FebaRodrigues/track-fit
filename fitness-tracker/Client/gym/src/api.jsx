@@ -1,28 +1,18 @@
 // src/api.jsx
 import axios from 'axios';
 import { resetPortDetection } from './utils/serverPortDetector';
+import { API_BASE_URL, ENV_INFO } from './utils/apiConfig';
 
 // Function to get the server URL with the correct port
 export const getServerUrl = () => {
-    // Check if we're in production (Vercel deployment)
-    const isProduction = window.location.hostname !== 'localhost';
-    
-    if (isProduction) {
-        console.log('Production environment detected, using relative API paths');
-        localStorage.setItem('useRelativeApi', 'true');
-        return '/api';
-    }
-    
-    // For development, use localhost with port
-    console.log('Using localhost API for development');
-    localStorage.setItem('serverPort', '5050');
-    localStorage.setItem('useRelativeApi', 'false');
-    return 'http://localhost:5050/api';
+    // Use the API_BASE_URL from centralized config
+    console.log(`Using API base URL from config: ${API_BASE_URL}`);
+    return API_BASE_URL;
 };
 
 // Initialize API with the server URL
 const API = axios.create({
-    baseURL: getServerUrl(),
+    baseURL: API_BASE_URL,
     timeout: 10000,
     withCredentials: true
 });
@@ -104,15 +94,9 @@ const showServerNotRunningMessage = () => {
 // Add request interceptor to update baseURL if needed
 API.interceptors.request.use(
     (config) => {
-        // Update baseURL on each request to ensure we're using the latest URL
-        const baseUrl = getServerUrl();
-        config.baseURL = baseUrl;
+        // Use API_BASE_URL from config
+        config.baseURL = API_BASE_URL;
         console.log(`API Request to: ${config.url}`);
-        
-        // If server was previously down, but we're trying again, log it
-        if (serverStatus.isDown && serverStatus.canCheck() && serverStatus.shouldRetry()) {
-            console.log(`Retrying request after server was down. Retry #${serverStatus.retryCount}`);
-        }
         
         return config;
     },
@@ -124,21 +108,8 @@ API.interceptors.request.use(
 
 // Function to update the server port
 export const updateServerPort = (port) => {
-    // Check if we should use relative path (production) or localhost (dev)
-    const isProduction = window.location.hostname !== 'localhost';
-    
-    if (isProduction) {
-        console.log('Setting API to use relative path for production');
-        localStorage.setItem('useRelativeApi', 'true');
-        API.defaults.baseURL = '/api';
-    } else {
-        console.log(`Setting API to use localhost:${port} for development`);
-        localStorage.setItem('serverPort', port.toString());
-        localStorage.setItem('useRelativeApi', 'false');
-        API.defaults.baseURL = `http://localhost:${port}/api`;
-    }
-    
-    console.log(`API baseURL updated to: ${API.defaults.baseURL}`);
+    // No need to update as we're using the centralized config
+    console.log(`API baseURL is set to: ${API_BASE_URL}`);
 };
 
 // Cache for API data to prevent excessive API calls

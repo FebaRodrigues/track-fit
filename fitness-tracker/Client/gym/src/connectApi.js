@@ -1,6 +1,7 @@
 //src\connectApi.js
 
 import axios from 'axios'
+import { API_BASE_URL } from './utils/apiConfig'
 
 // Check if we're in production (Vercel deployment)
 const isProduction = window.location.hostname !== 'localhost';
@@ -14,9 +15,13 @@ if (isProduction) {
   localStorage.setItem('serverPort', '5050');
 }
 
+// Create API instance using the centralized configuration
 const API = axios.create({
-    baseURL: baseURL,
+    baseURL: API_BASE_URL,
     withCredentials: true,  
 });
+
+// Log the base URL being used
+console.log(`ConnectAPI using base URL: ${API_BASE_URL}`);
 
 export default API
