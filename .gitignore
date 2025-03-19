@@ -49,4 +49,38 @@ Thumbs.db
 
 # Local database files
 *.sqlite
-*.db 
+*.db
+
+# Test files and directories
+test-*
+*test*
+*/test*/
+test-app/
+
+# Port files
+*port*
+*-port-*
+current-port.txt
+server-port.txt
+
+# Utility scripts and files
+*.bat
+*.ps1
+*.cmd
+*.cjs
+run-app.js
+run-*.js
+index.js
+*.md
+kill-node*
+*check-server*
+*reset*
+restart*
+diagnose*
+*simple*
+ensure-port*
+free-port*
+TROUBLESHOOTING*
+SERVER_SETUP*
+scripts/
+fitness-tracker/scripts/ 

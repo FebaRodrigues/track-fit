@@ -34,4 +34,39 @@ yarn-error.log*
 *.sw?
 
 # Cache
-.cache/ 
+.cache/
+
+# Test files
+test-*
+*test*
+*/test*/
+
+# Port files
+*port*
+*-port-*
+current-port.txt
+server-port.txt
+
+# Utility scripts and files
+*.bat
+*.ps1
+*.cmd
+*.cjs
+*.md
+start-*
+run-*
+*-server*
+*reset*
+*restart*
+
+# Keep only essential client files
+# Preserve: src/components, src/pages, src/hooks, src/context
+# Hide utility files
+/public/test*
+/src/utils/
+/src/styles/*.css
+!src/styles/global.css
+
+# Config files
+*.config.js
+!vite.config.js 

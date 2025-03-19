@@ -56,3 +56,38 @@ npm-debug.log*
 
 # Server logs
 server.log
+
+# Test files
+test-*
+*test*
+*/test*/
+create-test-*.js
+fix-*.js
+fix*.js
+update*.js
+*simple*.js
+activate*.js
+
+# Scripts
+scripts/
+*.ps1
+*.bat
+*.cmd
+restart-*
+diagnose-*
+start-*
+run-*
+check-*
+
+# Port files
+*port*
+port*
+
+# Utility files
+config/*.js
+!config/db.js
+!config/cloudinaryConfig.js
+
+# Keep only essential server files
+# Preserve: controllers/, routes/, models/, middleware/
+# Hide test and utility files
