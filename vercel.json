@@ -1,6 +1,13 @@
 {
+  "version": 2,
   "buildCommand": "cd fitness-tracker/Client/gym && npm install && npm run build",
   "outputDirectory": "fitness-tracker/Client/gym/dist",
+  "functions": {
+    "api/**/*": {
+      "memory": 1024,
+      "maxDuration": 10
+    }
+  },
   "headers": [
     {
       "source": "/(.*)",
@@ -13,6 +20,12 @@
     }
   ],
   "routes": [
-    { "src": "/(.*)", "dest": "/index.html", "status": 200 }
+    { "src": "/api/health", "dest": "/api/health.js" },
+    { "src": "/api/users/login", "dest": "/api/users/login.js" },
+    { "src": "/api/users/register", "dest": "/api/users/register.js" },
+    { "src": "/api", "dest": "/api/index.js" },
+    { "src": "/api/(.*)", "dest": "/api/index.js" },
+    { "handle": "filesystem" },
+    { "src": "/(.*)", "dest": "/index.html" }
   ]
 } 
