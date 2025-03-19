@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagnostic Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .success { color: green; }
+        .error { color: red; }
+        pre { background: #f5f5f5; padding: 10px; overflow: auto; }
+        button { padding: 8px 12px; margin: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>TrackFit Diagnostic Page</h1>
+    <p>This page tests if the Vercel deployment is working correctly.</p>
+
+    <div id="tests">
+        <h2>Environment Tests</h2>
+        <div id="env-info"></div>
+
+        <h2>API Connection Test</h2>
+        <div id="api-test">
+            <button id="test-api">Test API Connection</button>
+            <div id="api-result"></div>
+        </div>
+
+        <h2>Client-Side Navigation Test</h2>
+        <div id="routes-test">
+            <p>Check if these routes work by clicking them:</p>
+            <ul>
+                <li><a href="/" target="_blank">Home</a></li>
+                <li><a href="/about" target="_blank">About</a></li>
+                <li><a href="/users/login" target="_blank">Login</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Display environment information
+        function showEnvInfo() {
+            const envInfo = document.getElementById('env-info');
+            const hostname = window.location.hostname;
+            const protocol = window.location.protocol;
+            const isProduction = hostname !== 'localhost';
+            
+            envInfo.innerHTML = `
+                <p><strong>Hostname:</strong> ${hostname}</p>
+                <p><strong>Protocol:</strong> ${protocol}</p>
+                <p><strong>Environment:</strong> ${isProduction ? 'Production' : 'Development'}</p>
+                <p><strong>localStorage:</strong> <pre>${JSON.stringify(getLocalStorageItems(), null, 2)}</pre></p>
+            `;
+        }
+
+        // Get all localStorage items
+        function getLocalStorageItems() {
+            const items = {};
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                try {
+                    // Try to parse JSON values
+                    const value = localStorage.getItem(key);
+                    try {
+                        items[key] = JSON.parse(value);
+                    } catch (e) {
+                        items[key] = value;
+                    }
+                } catch (e) {
+                    items[key] = "[Error reading value]";
+                }
+            }
+            return items;
+        }
+
+        // Test API connection
+        document.getElementById('test-api').addEventListener('click', async () => {
+            const resultDiv = document.getElementById('api-result');
+            resultDiv.innerHTML = '<p>Testing API connection...</p>';
+            
+            try {
+                // Use the appropriate API URL based on environment
+                const isProduction = window.location.hostname !== 'localhost';
+                const apiUrl = isProduction ? '/api/health' : 'http://localhost:5050/api/health';
+                
+                localStorage.setItem('useRelativeApi', isProduction ? 'true' : 'false');
+                if (!isProduction) {
+                    localStorage.setItem('serverPort', '5050');
+                }
+                
+                resultDiv.innerHTML += `<p>Trying to connect to: ${apiUrl}</p>`;
+                
+                const response = await fetch(apiUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const status = response.status;
+                let data;
+                try {
+                    data = await response.json();
+                } catch (e) {
+                    data = await response.text();
+                }
+                
+                if (response.ok || status === 404) {
+                    resultDiv.innerHTML += `
+                        <p class="success">Connection successful!</p>
+                        <p>Status: ${status}</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    resultDiv.innerHTML += `
+                        <p class="error">Connection failed with status: ${status}</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML += `
+                    <p class="error">Error connecting to API:</p>
+                    <pre>${error.message}</pre>
+                `;
+            }
+        });
+
+        // Run environment info on load
+        window.onload = showEnvInfo;
+    </script>
+</body>
+</html> 

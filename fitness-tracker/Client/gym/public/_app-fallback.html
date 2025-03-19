@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrackFit - Fallback Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            text-align: center;
+            padding: 50px 20px;
+            max-width: 800px;
+            margin: 0 auto;
+            color: #333;
+        }
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: #0066cc;
+        }
+        p {
+            font-size: 1.1rem;
+            margin-bottom: 1.5rem;
+        }
+        .btn {
+            display: inline-block;
+            background: #0066cc;
+            color: #fff;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 10px;
+            font-weight: bold;
+        }
+        .btn:hover {
+            background: #0055aa;
+        }
+        .error-info {
+            background: #f8f9fa;
+            border-radius: 5px;
+            padding: 20px;
+            margin-top: 30px;
+            text-align: left;
+        }
+        code {
+            background: #eee;
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <h1>TrackFit</h1>
+    <p>Your Fitness Management System</p>
+    
+    <div>
+        <p>It looks like there was an issue loading the application.</p>
+        <p>Here are some options to try:</p>
+        
+        <div>
+            <a href="/" class="btn">Go to Home Page</a>
+            <a href="/test-diagnostic.html" class="btn">Run Diagnostics</a>
+        </div>
+    </div>
+    
+    <div class="error-info">
+        <h2>Technical Information</h2>
+        <p>The application may be experiencing one of these issues:</p>
+        <ul>
+            <li>Client-side routing configuration issue</li>
+            <li>Failed to connect to the backend API</li>
+            <li>JavaScript error during initialization</li>
+        </ul>
+        
+        <p>Try refreshing your browser or clearing your cache.</p>
+        <p>Check the browser console for more detailed error messages (press F12 to open developer tools).</p>
+        
+        <div id="technical-details"></div>
+    </div>
+
+    <script>
+        // Display some technical details that might help diagnose the issue
+        document.addEventListener('DOMContentLoaded', function() {
+            const details = document.getElementById('technical-details');
+            
+            try {
+                const info = {
+                    url: window.location.href,
+                    userAgent: navigator.userAgent,
+                    timestamp: new Date().toISOString(),
+                    localStorage: {}
+                };
+                
+                // Safely get localStorage items
+                try {
+                    for (let i = 0; i < localStorage.length; i++) {
+                        const key = localStorage.key(i);
+                        info.localStorage[key] = localStorage.getItem(key);
+                    }
+                } catch (e) {
+                    info.localStorage = { error: e.message };
+                }
+                
+                details.innerHTML = `
+                    <h3>Debug Information</h3>
+                    <pre>${JSON.stringify(info, null, 2)}</pre>
+                `;
+            } catch (e) {
+                details.innerHTML = `<p>Error collecting debug info: ${e.message}</p>`;
+            }
+        });
+    </script>
+</body>
+</html> 

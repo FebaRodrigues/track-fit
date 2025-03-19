@@ -24,6 +24,14 @@
       "dest": "/fitness-tracker/Client/gym/dist/assets/$1"
     },
     {
+      "src": "^/test-diagnostic.html",
+      "dest": "/fitness-tracker/Client/gym/public/test-diagnostic.html"
+    },
+    {
+      "src": "^/_app-fallback.html",
+      "dest": "/fitness-tracker/Client/gym/public/_app-fallback.html"
+    },
+    {
       "src": "^/favicon\\.ico",
       "dest": "/fitness-tracker/Client/gym/dist/favicon.ico"
     },
@@ -41,7 +49,29 @@
     {
       "src": "/(.*)",
       "dest": "/fitness-tracker/Client/gym/dist/index.html",
-      "status": 200
+      "headers": {
+        "Cache-Control": "no-cache, no-store, must-revalidate"
+      },
+      "continue": true
     }
-  ]
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "DENY" },
+        { "key": "X-XSS-Protection", "value": "1; mode=block" }
+      ]
+    },
+    {
+      "source": "/assets/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+      ]
+    }
+  ],
+  "env": {
+    "NODE_ENV": "production"
+  }
 } 

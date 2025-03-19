@@ -11,9 +11,86 @@
       integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9"
       crossorigin="anonymous"
     />
+    <style>
+      /* Basic error styles */
+      .app-error {
+        display: none;
+        padding: 20px;
+        text-align: center;
+        max-width: 600px;
+        margin: 50px auto;
+      }
+      .app-error h2 {
+        color: #dc3545;
+      }
+      .app-error p {
+        margin: 15px 0;
+      }
+      .app-error .btn {
+        display: inline-block;
+        background: #0d6efd;
+        color: white;
+        padding: 8px 16px;
+        text-decoration: none;
+        border-radius: 4px;
+        margin: 10px 5px;
+      }
+    </style>
+    <script>
+      // Initialize production vs development environment detection
+      // This needs to happen early before any API calls
+      (function() {
+        const isProduction = window.location.hostname !== 'localhost';
+        localStorage.setItem('useRelativeApi', isProduction ? 'true' : 'false');
+        
+        if (!isProduction) {
+          localStorage.setItem('serverPort', '5050');
+        }
+        
+        // Set a timeout to detect if application fails to load
+        window.appLoadTimeout = setTimeout(function() {
+          const root = document.getElementById('root');
+          const errorDisplay = document.getElementById('loading-error');
+          
+          if (root && root.children.length === 0 && errorDisplay) {
+            errorDisplay.style.display = 'block';
+          }
+        }, 10000); // 10 seconds timeout
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
+    
+    <!-- Error display if app fails to load -->
+    <div id="loading-error" class="app-error">
+      <h2>Application Loading Issue</h2>
+      <p>The TrackFit application didn't load properly. This could be due to a network issue or a problem with the application.</p>
+      <div>
+        <a href="/" class="btn">Refresh Page</a>
+        <a href="/test-diagnostic.html" class="btn">Run Diagnostics</a>
+      </div>
+      <p style="margin-top: 20px; font-size: 0.9em;">If the problem persists, please clear your browser cache or try using a different browser.</p>
+    </div>
+    
+    <script type="module" src="/src/main.jsx" onerror="document.getElementById('loading-error').style.display='block'"></script>
+    <script>
+      // Clear the timeout if the app loads successfully
+      window.addEventListener('load', function() {
+        if (window.appLoadTimeout) {
+          clearTimeout(window.appLoadTimeout);
+        }
+      });
+      
+      // Global error handler for uncaught errors
+      window.addEventListener('error', function(event) {
+        console.error('Uncaught error:', event.error);
+        
+        // Only show the error display if it's a script error not handled elsewhere
+        if (event.error && event.error.message && event.error.message.indexOf('ChunkLoadError') !== -1) {
+          document.getElementById('loading-error').style.display = 'block';
+        }
+      });
+    </script>
   </body>
 </html>
