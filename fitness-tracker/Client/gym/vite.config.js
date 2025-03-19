@@ -22,5 +22,22 @@ export default defineConfig({
     port: 5173,
     strictPort: true, // Force the use of port 5173 for preview mode as well
     open: true
+  },
+  build: {
+    outDir: 'dist',
+    assetsDir: 'assets',
+    emptyOutDir: true,
+    sourcemap: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom', 'react-router-dom'],
+          ui: ['@mui/material', '@mui/icons-material']
+        }
+      }
+    }
+  },
+  define: {
+    'import.meta.env.VITE_USE_CORS_PROXY': JSON.stringify('true')
   }
 })

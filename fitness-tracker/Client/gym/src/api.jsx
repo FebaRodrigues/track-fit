@@ -772,20 +772,18 @@ export const loginUser = async (email, password) => {
         
         console.log(`Attempting login with API_BASE_URL: ${API_BASE_URL}`);
         
-        // Get the full URL for the login endpoint
-        const loginUrl = ENV_INFO.useCorsProxy 
-            ? getApiUrl('users/login') 
-            : `${API_BASE_URL}/users/login`;
+        // Get the full URL for the login endpoint - always use getApiUrl
+        const loginUrl = getApiUrl('users/login'); 
             
         console.log(`Login URL: ${loginUrl}`);
         
-        // Create a new axios instance for this request to ensure we use the configured URL
+        // Create a new axios instance for this request without baseURL
         const loginAPI = axios.create({
             timeout: 5000, // Longer timeout for login
             withCredentials: ENV_INFO.useCorsProxy ? false : true // Don't use withCredentials when using CORS proxy
         });
         
-        // Make the request directly to the URL instead of using baseURL
+        // Make the request directly to the URL
         const response = await loginAPI.post(loginUrl, { email, password }, {
             headers: {
                 'Content-Type': 'application/json',

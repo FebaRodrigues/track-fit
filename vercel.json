@@ -1,13 +1,7 @@
 {
+  "buildCommand": "cd fitness-tracker/Client/gym && npm install && npm run build",
+  "outputDirectory": "fitness-tracker/Client/gym/dist",
   "routes": [
     { "src": "/(.*)", "dest": "/index.html", "status": 200 }
-  ],
-  "env": {
-    "VITE_USE_CORS_PROXY": "true"
-  },
-  "build": {
-    "env": {
-      "VITE_USE_CORS_PROXY": "true"
-    }
-  }
+  ]
 } 

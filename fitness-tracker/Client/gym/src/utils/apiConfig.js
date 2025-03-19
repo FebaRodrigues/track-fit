@@ -10,8 +10,8 @@ console.log('CORS proxy env value:', corsProxyEnv);
 // Force enable CORS proxy in production for now due to CORS issues
 const useCorsProxy = isProduction ? true : (corsProxyEnv === 'true');
 
-// CORS proxy URL
-const CORS_PROXY = 'https://corsproxy.io/?';
+// CORS proxy URL - try a different service
+const CORS_PROXY = 'https://cors-anywhere.herokuapp.com/';
 
 // Backend server URL
 const BACKEND_URL = 'https://trackfit-server.onrender.com/api';
