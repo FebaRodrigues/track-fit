@@ -23,8 +23,10 @@
     { "src": "/api/health", "dest": "/api/health.js" },
     { "src": "/api/users/login", "dest": "/api/users/login.js" },
     { "src": "/api/users/register", "dest": "/api/users/register.js" },
-    { "src": "/api", "dest": "/api/index.js" },
-    { "src": "/api/(.*)", "dest": "/api/index.js" },
+    { "src": "/api/trainers/login", "dest": "/api/trainers/login.js" },
+    { "src": "/api/trainers/register", "dest": "/api/trainers/register.js" },
+    { "src": "/api/admin/login", "dest": "/api/admin/login.js" },
+    { "src": "/api/(.*)", "dest": "/api/[...path].js" },
     { "handle": "filesystem" },
     { "src": "/(.*)", "dest": "/index.html" }
   ]
