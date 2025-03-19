@@ -1,7 +1,10 @@
 {
   "rewrites": [
-    { "source": "/api/:path*", "destination": "https://trackfit-server.onrender.com/api/:path*" },
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/api/:path*", "destination": "https://trackfit-server.onrender.com/api/:path*" }
+  ],
+  "routes": [
+    { "src": "/api/(.*)", "dest": "https://trackfit-server.onrender.com/api/$1", "methods": ["OPTIONS", "GET", "POST", "PUT", "PATCH", "DELETE"] },
+    { "src": "/(.*)", "dest": "/index.html", "status": 200 }
   ],
   "headers": [
     {
