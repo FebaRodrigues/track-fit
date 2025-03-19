@@ -5,7 +5,8 @@
       "src": "fitness-tracker/Client/gym/package.json",
       "use": "@vercel/static-build",
       "config": {
-        "distDir": "dist"
+        "distDir": "dist",
+        "buildCommand": "npm run build"
       }
     },
     {
@@ -16,18 +17,31 @@
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "fitness-tracker/Server/server.js"
+      "dest": "/fitness-tracker/Server/server.js"
+    },
+    {
+      "src": "^/assets/(.*)",
+      "dest": "/fitness-tracker/Client/gym/dist/assets/$1"
+    },
+    {
+      "src": "^/favicon\\.ico",
+      "dest": "/fitness-tracker/Client/gym/dist/favicon.ico"
+    },
+    {
+      "src": "^/manifest\\.json",
+      "dest": "/fitness-tracker/Client/gym/dist/manifest.json"
+    },
+    {
+      "src": "^/robots\\.txt",
+      "dest": "/fitness-tracker/Client/gym/dist/robots.txt"
     },
     {
       "handle": "filesystem"
     },
     {
-      "src": "/assets/(.*)",
-      "dest": "fitness-tracker/Client/gym/dist/assets/$1"
-    },
-    {
       "src": "/(.*)",
-      "dest": "fitness-tracker/Client/gym/dist/index.html"
+      "dest": "/fitness-tracker/Client/gym/dist/index.html",
+      "status": 200
     }
   ]
 } 
