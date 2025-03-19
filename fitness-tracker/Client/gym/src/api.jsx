@@ -777,33 +777,46 @@ export const loginUser = async (email, password) => {
             
         console.log(`Login URL: ${loginUrl}`);
         
-        // Create a new axios instance for this request without baseURL
-        const loginAPI = axios.create({
-            timeout: 5000, // Longer timeout for login
-            withCredentials: ENV_INFO.useCorsProxy ? false : true // Don't use withCredentials when using CORS proxy
-        });
-        
-        // Make the request directly to the URL
-        const response = await loginAPI.post(loginUrl, { email, password }, {
+        // Use fetch API instead of axios to avoid potential issues
+        const response = await fetch(loginUrl, {
+            method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'
-            }
+            },
+            body: JSON.stringify({ email, password }),
+            credentials: ENV_INFO.useCorsProxy ? 'omit' : 'include'
         });
         
-        return response;
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error(`Login failed with status ${response.status}:`, errorText);
+            
+            if (response.status === 401) {
+                throw new Error('Invalid email or password. Please try again.');
+            } else if (response.status === 400) {
+                throw new Error('Email and password are required.');
+            } else {
+                throw new Error(`Login failed: ${response.statusText}`);
+            }
+        }
+        
+        const data = await response.json();
+        
+        // Create response structure similar to axios for compatibility
+        return {
+            data,
+            status: response.status,
+            statusText: response.statusText,
+            headers: Object.fromEntries(response.headers.entries())
+        };
     } catch (error) {
         console.error('Login error:', error);
         
         // Provide more detailed error messages
-        if (error.response && error.response.status === 401) {
-            throw new Error('Invalid email or password. Please try again.');
-        }
-        
-        // Provide a more user-friendly error message for server connection issues
-        if (error.code === 'ERR_NETWORK') {
-            const environment = ENV_INFO.isProduction ? 'production' : 'development';
-            throw new Error(`Cannot connect to server (${environment} mode). Please check your connection.`);
+        if (error.message.includes('NetworkError') || error.message.includes('Failed to fetch')) {
+            resetPortDetection();
+            throw new Error('Cannot connect to server. Please check if the server is running.');
         }
         
         throw error;
@@ -812,54 +825,48 @@ export const loginUser = async (email, password) => {
 
 export const registerUser = async (data) => {
     try {
-        console.log(`Attempting registration with API_BASE_URL: ${API_BASE_URL}`);
-        
         // Get the full URL for the register endpoint
-        const registerUrl = ENV_INFO.useCorsProxy 
-            ? getApiUrl('users/register') 
-            : `${API_BASE_URL}/users/register`;
+        const registerUrl = getApiUrl('users/register');
             
         console.log(`Register URL: ${registerUrl}`);
         
-        // Create a new axios instance for this request
-        const registerAPI = axios.create({
-            timeout: 10000, // Longer timeout for registration with image upload
-            withCredentials: ENV_INFO.useCorsProxy ? false : true // Don't use withCredentials when using CORS proxy
+        // Use fetch API for registration
+        const response = await fetch(registerUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify(data),
+            credentials: ENV_INFO.useCorsProxy ? 'omit' : 'include'
         });
         
-        // Log the FormData contents for debugging
-        if (data instanceof FormData) {
-            console.log('Registration FormData contents:');
-            for (let pair of data.entries()) {
-                // Don't log the actual file content, just its presence
-                if (pair[0] === 'image' && pair[1] instanceof File) {
-                    console.log(`${pair[0]}: [File] ${pair[1].name} (${pair[1].size} bytes)`);
-                } else {
-                    console.log(`${pair[0]}: ${pair[1]}`);
-                }
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error(`Registration failed with status ${response.status}:`, errorText);
+            
+            if (response.status === 400) {
+                throw new Error('Invalid registration data. Please check your inputs.');
+            } else {
+                throw new Error(`Registration failed: ${response.statusText}`);
             }
         }
         
-        const response = await registerAPI.post(registerUrl, data, {
-            headers: {
-                'Content-Type': data instanceof FormData ? 'multipart/form-data' : 'application/json',
-                'Accept': 'application/json'
-            }
-        });
+        const responseData = await response.json();
         
-        return response;
+        // Create response structure similar to axios for compatibility
+        return {
+            data: responseData,
+            status: response.status,
+            statusText: response.statusText,
+            headers: Object.fromEntries(response.headers.entries())
+        };
     } catch (error) {
         console.error('Registration error:', error);
         
-        // Provide more detailed error messages
-        if (error.response && error.response.data && error.response.data.message) {
-            throw new Error(error.response.data.message);
-        }
-        
-        // Provide a more user-friendly error message for server connection issues
-        if (error.code === 'ERR_NETWORK') {
-            const environment = ENV_INFO.isProduction ? 'production' : 'development';
-            throw new Error(`Cannot connect to server (${environment} mode). Please check your connection and try again.`);
+        if (error.message.includes('NetworkError') || error.message.includes('Failed to fetch')) {
+            resetPortDetection();
+            throw new Error('Cannot connect to server. Please check if the server is running.');
         }
         
         throw error;
