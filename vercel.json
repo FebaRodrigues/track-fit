@@ -1,0 +1,26 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "fitness-tracker/Client/gym/**",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "fitness-tracker/Client/gym/dist"
+      }
+    },
+    {
+      "src": "fitness-tracker/Server/server.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "fitness-tracker/Server/server.js"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "fitness-tracker/Client/gym/$1"
+    }
+  ]
+} 
