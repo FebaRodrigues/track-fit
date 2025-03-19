@@ -36,6 +36,7 @@ const generateToken = (user) => {
   })).toString('base64');
 };
 
+// Catch-all API handler
 module.exports = async (req, res) => {
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Credentials', true);
@@ -46,88 +47,31 @@ module.exports = async (req, res) => {
     'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization'
   );
 
-  // Handle OPTIONS request for CORS preflight
+  // Handle OPTIONS request (CORS preflight)
   if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
+    return res.status(200).end();
   }
 
-  // Get the path from the request
-  const path = req.query.path || [];
-  const apiPath = path.join('/');
+  // Get the path from the URL
+  const path = req.url.split('/').filter(Boolean);
   
-  console.log(`Handling API request: ${req.method} ${apiPath}`);
+  console.log('Catch-all API handler received request:');
+  console.log('URL:', req.url);
+  console.log('Method:', req.method);
+  console.log('Path segments:', path);
 
-  try {
-    // Health check endpoint
-    if (apiPath === 'health') {
-      return res.status(200).json({ status: 'ok', message: 'API is healthy' });
-    }
-    
-    // Login endpoint
-    if (apiPath === 'users/login' && req.method === 'POST') {
-      const { email, password } = req.body;
-      
-      // Find the user
-      const user = users.find(u => u.email === email && u.password === password);
-      
-      if (!user) {
-        return res.status(401).json({ message: 'Invalid email or password' });
-      }
-      
-      // Generate a token
-      const token = generateToken(user);
-      
-      return res.status(200).json({
-        token,
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role
-        }
-      });
-    }
-    
-    // Register endpoint
-    if (apiPath === 'users/register' && req.method === 'POST') {
-      const userData = req.body;
-      
-      // Check if email already exists
-      if (users.some(u => u.email === userData.email)) {
-        return res.status(400).json({ message: 'Email already exists' });
-      }
-      
-      // Create a new user
-      const newUser = {
-        id: users.length + 1,
-        name: userData.name,
-        email: userData.email,
-        password: userData.password,
-        role: 'user'
-      };
-      
-      // Add the user to the mock database
-      users.push(newUser);
-      
-      // Generate a token
-      const token = generateToken(newUser);
-      
-      return res.status(201).json({
-        token,
-        user: {
-          id: newUser.id,
-          name: newUser.name,
-          email: newUser.email,
-          role: newUser.role
-        }
-      });
-    }
-    
-    // For any other endpoint, return a 404 for now
-    return res.status(404).json({ message: 'Endpoint not implemented yet' });
-  } catch (error) {
-    console.error('Error in API handler:', error);
-    return res.status(500).json({ error: 'Internal Server Error', message: error.message });
-  }
+  // Return basic information for any unhandled routes
+  return res.status(200).json({
+    message: 'API catchall handler',
+    path: req.url,
+    method: req.method,
+    availableRoutes: [
+      '/api/health',
+      '/api/users/login',
+      '/api/users/register',
+      '/api/trainers/login',
+      '/api/trainers/register',
+      '/api/admin/login'
+    ]
+  });
 }; 

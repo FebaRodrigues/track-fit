@@ -21,6 +21,7 @@
   ],
   "routes": [
     { "src": "/api/health", "dest": "/api/health.js" },
+    { "src": "/api/debug", "dest": "/api/debug.js" },
     { "src": "/api/users/login", "dest": "/api/users/login.js" },
     { "src": "/api/users/register", "dest": "/api/users/register.js" },
     { "src": "/api/trainers/login", "dest": "/api/trainers/login.js" },
