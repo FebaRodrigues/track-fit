@@ -3,15 +3,13 @@
 // Determine if we're in production environment
 const isProduction = window.location.hostname !== 'localhost';
 
-// We'll use direct API URLs for now
+// We don't need CORS proxy because we're using local API endpoints
 const useCorsProxy = false;
 
-// Backend server URL - always direct
-const BACKEND_URL = 'https://trackfit-server.onrender.com/api';
-
 // Set the API base URL based on environment
+// In production, use relative '/api' path which will be handled by Vercel
 export const API_BASE_URL = isProduction 
-  ? BACKEND_URL
+  ? '/api'
   : 'http://localhost:5050/api';
 
 // For logging purposes
@@ -40,8 +38,7 @@ export const healthCheck = async () => {
         'Accept': 'application/json',
         'Content-Type': 'application/json'
       },
-      signal: controller.signal,
-      mode: 'cors'
+      signal: controller.signal
     });
     
     clearTimeout(timeoutId);
