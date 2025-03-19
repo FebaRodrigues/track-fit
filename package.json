@@ -1,23 +1,24 @@
 {
-  "name": "fitness-management-system",
+  "name": "track-fit",
   "version": "1.0.0",
   "description": "Fitness Management System",
   "main": "index.js",
   "scripts": {
-    "start": "node run-app.js",
-    "server": "cd fitness-tracker/Server && node index.js",
-    "client": "cd fitness-tracker/Client/gym && npm run dev",
-    "dev": "node run-app.js"
+    "build": "cd fitness-tracker/Client/gym && npm install && npm run build",
+    "start": "cd fitness-tracker/Server && node server.js"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/FebaRodrigues/track-fit.git"
   },
   "keywords": [
     "fitness",
-    "management",
-    "system"
+    "tracking",
+    "management"
   ],
   "author": "",
-  "license": "ISC",
-  "dependencies": {
-    "chart.js": "^4.4.8",
-    "react-chartjs-2": "^5.3.0"
-  }
+  "license": "ISC"
 }
