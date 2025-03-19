@@ -6,7 +6,7 @@
       "use": "@vercel/static-build",
       "config": {
         "distDir": "dist",
-        "buildCommand": "cd fitness-tracker/Client/gym && npm install && npm run build"
+        "buildCommand": "bash ./fitness-tracker/Client/gym/vercel-build.sh"
       }
     },
     {
