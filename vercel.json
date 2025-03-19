@@ -5,8 +5,8 @@
       "src": "fitness-tracker/Client/gym/package.json",
       "use": "@vercel/static-build",
       "config": {
-        "distDir": "dist",
-        "buildCommand": "npm run build"
+        "distDir": "fitness-tracker/Client/gym/dist",
+        "buildCommand": "cd fitness-tracker/Client/gym && npm install && npm run build"
       }
     },
     {
@@ -16,37 +16,6 @@
   ],
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/fitness-tracker/Server/server.js" },
-    { "source": "/assets/(.*)", "destination": "/fitness-tracker/Client/gym/dist/assets/$1" },
-    { "source": "/test-diagnostic.html", "destination": "/fitness-tracker/Client/gym/public/test-diagnostic.html" },
-    { "source": "/_app-fallback.html", "destination": "/fitness-tracker/Client/gym/public/_app-fallback.html" },
-    { "source": "/favicon.ico", "destination": "/fitness-tracker/Client/gym/dist/favicon.ico" },
-    { "source": "/manifest.json", "destination": "/fitness-tracker/Client/gym/dist/manifest.json" },
-    { "source": "/robots.txt", "destination": "/fitness-tracker/Client/gym/dist/robots.txt" },
-    { "source": "/(.*)", "destination": "/fitness-tracker/Client/gym/dist/index.html" }
-  ],
-  "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "X-Frame-Options", "value": "DENY" },
-        { "key": "X-XSS-Protection", "value": "1; mode=block" }
-      ]
-    },
-    {
-      "source": "/assets/(.*)",
-      "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
-      ]
-    },
-    {
-      "source": "/(.*).html",
-      "headers": [
-        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
-      ]
-    }
-  ],
-  "env": {
-    "NODE_ENV": "production"
-  }
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
 } 
