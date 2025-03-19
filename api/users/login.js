@@ -19,6 +19,7 @@ const parseBody = async (req) => {
     
     // If body is already parsed by Vercel
     if (req.body) {
+      console.log('Body already parsed:', typeof req.body);
       return resolve(
         typeof req.body === 'string' 
           ? JSON.parse(req.body) 
@@ -46,6 +47,13 @@ const parseBody = async (req) => {
 };
 
 module.exports = async (req, res) => {
+  console.log('===============================');
+  console.log('API LOGIN ENDPOINT ACCESSED');
+  console.log('Method:', req.method);
+  console.log('URL:', req.url);
+  console.log('Headers:', JSON.stringify(req.headers, null, 2));
+  console.log('===============================');
+
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -55,15 +63,15 @@ module.exports = async (req, res) => {
     'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization'
   );
 
-  // Handle OPTIONS request
+  // Handle OPTIONS request - CORS preflight
   if (req.method === 'OPTIONS') {
-    console.log('Received OPTIONS request for login endpoint');
+    console.log('Handling OPTIONS request - CORS preflight');
     return res.status(200).end();
   }
 
   // Handle GET request for health check
   if (req.method === 'GET') {
-    console.log('Received GET request for login endpoint (health check)');
+    console.log('Handling GET request - Health check');
     return res.status(200).json({ 
       status: 'ok',
       message: 'Login endpoint is working',
@@ -72,59 +80,77 @@ module.exports = async (req, res) => {
     });
   }
 
-  // Only allow POST requests for actual login
-  if (req.method !== 'POST') {
-    console.log(`Received unsupported method ${req.method} for login endpoint`);
-    return res.status(405).json({ message: 'Method not allowed' });
-  }
-
-  try {
-    console.log('Login request received');
-    console.log('Request method:', req.method);
-    console.log('Request headers:', req.headers);
+  // Handle POST request for login
+  if (req.method === 'POST') {
+    console.log('Handling POST request - Login attempt');
     
-    // Parse request body
-    const requestBody = await parseBody(req);
-    console.log('Parsed request body:', requestBody);
-    
-    // Extract credentials
-    const { email, password } = requestBody;
-    
-    if (!email || !password) {
-      return res.status(400).json({ message: 'Email and password are required' });
-    }
-
-    // Get the users collection from MongoDB
-    const usersCollection = await getCollection(COLLECTIONS.USERS);
-    console.log('Connected to users collection');
-
-    // Find the user by email and password
-    const user = await usersCollection.findOne({ 
-      email,
-      password // Note: In a real app, you'd compare hashed passwords
-    });
-    
-    if (!user) {
-      console.log(`User not found for email: ${email}`);
-      return res.status(401).json({ message: 'Invalid email or password' });
-    }
-    
-    console.log(`User found: ${user.name} (${user.email})`);
-    
-    // Generate a token
-    const token = generateToken(user);
-    
-    return res.status(200).json({
-      token,
-      user: {
-        id: user._id.toString(),
-        name: user.name,
-        email: user.email,
-        role: user.role
+    try {
+      // Parse request body
+      const requestBody = await parseBody(req);
+      console.log('Parsed request body:', JSON.stringify(requestBody, null, 2));
+      
+      // Extract credentials
+      const { email, password } = requestBody;
+      
+      if (!email || !password) {
+        console.log('Missing credentials');
+        return res.status(400).json({ message: 'Email and password are required' });
       }
-    });
-  } catch (error) {
-    console.error('Login error:', error);
-    return res.status(500).json({ message: 'Internal server error', error: error.message });
+
+      // Mock data for testing
+      const mockUsers = [
+        {
+          _id: '1',
+          name: 'Demo User',
+          email: 'demo@example.com',
+          password: 'password123',
+          role: 'user'
+        }
+      ];
+
+      // Use mock data or try to get from database
+      let user;
+      try {
+        const usersCollection = await getCollection(COLLECTIONS.USERS);
+        console.log('Connected to users collection');
+        user = await usersCollection.findOne({ email, password });
+      } catch (dbError) {
+        console.error('Database error:', dbError);
+        console.log('Falling back to mock data');
+        // Fall back to mock data if DB connection fails
+        user = mockUsers.find(u => u.email === email && u.password === password);
+      }
+      
+      if (!user) {
+        console.log(`User not found for email: ${email}`);
+        return res.status(401).json({ message: 'Invalid email or password' });
+      }
+      
+      console.log(`User found: ${user.name} (${user.email})`);
+      
+      // Generate a token
+      const token = generateToken(user);
+      
+      return res.status(200).json({
+        token,
+        user: {
+          id: user._id.toString(),
+          name: user.name,
+          email: user.email,
+          role: user.role
+        }
+      });
+    } catch (error) {
+      console.error('Login error:', error);
+      return res.status(500).json({ 
+        message: 'Internal server error', 
+        error: error.message,
+        stack: error.stack
+      });
+    }
   }
+
+  // For any other method
+  console.log(`Method ${req.method} not allowed`);
+  return res.status(405).json({ message: `Method ${req.method} Not Allowed` });
 }; 

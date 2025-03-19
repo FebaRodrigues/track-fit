@@ -776,21 +776,81 @@ export const loginUser = async (email, password) => {
         const loginUrl = getApiUrl('users/login'); 
             
         console.log(`Login URL: ${loginUrl}`);
+
+        // First try the debug endpoint to check API connectivity
+        try {
+            const debugResponse = await fetch(`${API_BASE_URL}/debug`, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
+            
+            if (debugResponse.ok) {
+                const debugData = await debugResponse.json();
+                console.log('Debug endpoint response:', debugData);
+            } else {
+                console.warn('Debug endpoint error:', await debugResponse.text());
+            }
+        } catch (debugError) {
+            console.warn('Could not reach debug endpoint:', debugError);
+        }
         
-        // Use fetch API instead of axios to avoid potential issues
+        // Use fetch API with explicit content type and mode
         const response = await fetch(loginUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Accept': 'application/json'
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
             },
             body: JSON.stringify({ email, password }),
-            credentials: ENV_INFO.useCorsProxy ? 'omit' : 'include'
+            credentials: ENV_INFO.useCorsProxy ? 'omit' : 'include',
+            mode: 'cors'
         });
         
         if (!response.ok) {
             const errorText = await response.text();
             console.error(`Login failed with status ${response.status}:`, errorText);
+            
+            // Special handling for 405 errors
+            if (response.status === 405) {
+                console.error('Method Not Allowed error. API endpoint might not be configured correctly.');
+                // Try an alternative approach with a direct URL
+                try {
+                    console.log('Attempting alternative login approach...');
+                    const alternativeUrl = new URL(window.location.origin);
+                    alternativeUrl.pathname = '/api/users/login';
+                    
+                    console.log(`Alternative URL: ${alternativeUrl.toString()}`);
+                    
+                    const alternativeResponse = await fetch(alternativeUrl.toString(), {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({ email, password }),
+                        credentials: 'include',
+                        mode: 'cors'
+                    });
+                    
+                    if (alternativeResponse.ok) {
+                        const data = await alternativeResponse.json();
+                        return {
+                            data,
+                            status: alternativeResponse.status,
+                            statusText: alternativeResponse.statusText,
+                            headers: Object.fromEntries(alternativeResponse.headers.entries())
+                        };
+                    } else {
+                        throw new Error(`Alternative login also failed: ${alternativeResponse.status} ${alternativeResponse.statusText}`);
+                    }
+                } catch (altError) {
+                    console.error('Alternative login approach failed:', altError);
+                    throw new Error(`Login failed: API endpoint returned 405 Method Not Allowed`);
+                }
+            }
             
             if (response.status === 401) {
                 throw new Error('Invalid email or password. Please try again.');
@@ -882,12 +942,115 @@ export const updateUser = (data) => {
 };
 
 // Trainer API
-export const loginTrainer = (email, password) => {
-    return API.post('/trainers/login', { email, password });
+export const loginTrainer = async (email, password) => {
+    try {
+        // Clear any existing tokens before login
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        localStorage.removeItem('trainer');
+        localStorage.removeItem('role');
+        
+        console.log(`Attempting trainer login with API_BASE_URL: ${API_BASE_URL}`);
+        
+        // Get the full URL for the login endpoint
+        const loginUrl = getApiUrl('trainers/login');
+            
+        console.log(`Trainer login URL: ${loginUrl}`);
+        
+        // Use fetch API instead of axios to avoid potential issues
+        const response = await fetch(loginUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ email, password }),
+            credentials: ENV_INFO.useCorsProxy ? 'omit' : 'include'
+        });
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error(`Trainer login failed with status ${response.status}:`, errorText);
+            
+            if (response.status === 401) {
+                throw new Error('Invalid email or password. Please try again.');
+            } else if (response.status === 400) {
+                throw new Error('Email and password are required.');
+            } else {
+                throw new Error(`Login failed: ${response.statusText}`);
+            }
+        }
+        
+        const data = await response.json();
+        
+        // Create response structure similar to axios for compatibility
+        return {
+            data,
+            status: response.status,
+            statusText: response.statusText,
+            headers: Object.fromEntries(response.headers.entries())
+        };
+    } catch (error) {
+        console.error('Trainer login error:', error);
+        
+        // Provide more detailed error messages
+        if (error.message.includes('NetworkError') || error.message.includes('Failed to fetch')) {
+            resetPortDetection();
+            throw new Error('Cannot connect to server. Please check if the server is running.');
+        }
+        
+        throw error;
+    }
 };
 
-export const registerTrainer = (data) => {
-    return API.post('/trainers/register', data);
+export const registerTrainer = async (data) => {
+    try {
+        // Get the full URL for the register endpoint
+        const registerUrl = getApiUrl('trainers/register');
+            
+        console.log(`Trainer register URL: ${registerUrl}`);
+        
+        // Use fetch API for registration
+        const response = await fetch(registerUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify(data),
+            credentials: ENV_INFO.useCorsProxy ? 'omit' : 'include'
+        });
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error(`Trainer registration failed with status ${response.status}:`, errorText);
+            
+            if (response.status === 400) {
+                throw new Error('Invalid registration data. Please check your inputs.');
+            } else {
+                throw new Error(`Registration failed: ${response.statusText}`);
+            }
+        }
+        
+        const responseData = await response.json();
+        
+        // Create response structure similar to axios for compatibility
+        return {
+            data: responseData,
+            status: response.status,
+            statusText: response.statusText,
+            headers: Object.fromEntries(response.headers.entries())
+        };
+    } catch (error) {
+        console.error('Trainer registration error:', error);
+        
+        if (error.message.includes('NetworkError') || error.message.includes('Failed to fetch')) {
+            resetPortDetection();
+            throw new Error('Cannot connect to server. Please check if the server is running.');
+        }
+        
+        throw error;
+    }
 };
 
 // Updated to use the public endpoint for regular users
