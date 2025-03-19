@@ -3,54 +3,48 @@
 // Determine if we're in production environment
 const isProduction = window.location.hostname !== 'localhost';
 
-// Check if we should use CORS proxy - ensure we handle the value correctly
-const corsProxyEnv = import.meta.env.VITE_USE_CORS_PROXY || 'false';
-console.log('CORS proxy env value:', corsProxyEnv);
+// We'll use direct API URLs for now
+const useCorsProxy = false;
 
-// Force enable CORS proxy in production for now due to CORS issues
-const useCorsProxy = isProduction ? true : (corsProxyEnv === 'true');
-
-// CORS proxy URL - try a different service
-const CORS_PROXY = 'https://cors-anywhere.herokuapp.com/';
-
-// Backend server URL
+// Backend server URL - always direct
 const BACKEND_URL = 'https://trackfit-server.onrender.com/api';
 
 // Set the API base URL based on environment
 export const API_BASE_URL = isProduction 
-  ? (useCorsProxy ? `${CORS_PROXY}${encodeURIComponent(BACKEND_URL)}` : BACKEND_URL)
+  ? BACKEND_URL
   : 'http://localhost:5050/api';
 
 // For logging purposes
 console.log(`Using API base URL: ${API_BASE_URL} (${isProduction ? 'production' : 'development'})`);
-console.log(`CORS proxy: ${useCorsProxy ? 'enabled' : 'disabled'}`);
 
 // Helper function to get the full API URL for a given endpoint
 export const getApiUrl = (endpoint) => {
   // Make sure endpoint doesn't start with a slash if we're adding it to the base URL
   const normalizedEndpoint = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint;
-  
-  if (isProduction && useCorsProxy) {
-    // For CORS proxy, we need to encode the full URL
-    return `${CORS_PROXY}${encodeURIComponent(`${BACKEND_URL}/${normalizedEndpoint}`)}`;
-  }
-  
   return `${API_BASE_URL}/${normalizedEndpoint}`;
 };
 
 // Health check function that respects environment
 export const healthCheck = async () => {
   try {
-    const healthCheckUrl = getApiUrl('health');
+    const healthCheckUrl = `${API_BASE_URL}/health`;
     console.log(`Health check URL: ${healthCheckUrl}`);
+    
+    // Set a timeout for the fetch to avoid long waits
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000);
     
     const response = await fetch(healthCheckUrl, {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json'
-      }
+      },
+      signal: controller.signal,
+      mode: 'cors'
     });
+    
+    clearTimeout(timeoutId);
     return response.ok;
   } catch (error) {
     console.error('Health check failed:', error);

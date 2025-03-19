@@ -94,21 +94,14 @@ const showServerNotRunningMessage = () => {
 // Add request interceptor to update baseURL if needed
 API.interceptors.request.use(
     (config) => {
-        // Update the URL to use the appropriate endpoint with CORS proxy if needed
-        if (ENV_INFO.isProduction && ENV_INFO.useCorsProxy) {
-            // Extract the endpoint from the URL
-            const baseUrlStr = API_BASE_URL.toString();
-            const urlPath = config.url;
-            
-            if (urlPath && !urlPath.includes(baseUrlStr)) {
-                // If it's a relative path, get the full URL using the helper
-                const fullUrl = getApiUrl(urlPath);
-                console.log(`Converting ${urlPath} to ${fullUrl} for CORS proxy`);
-                config.url = fullUrl;
-                config.baseURL = '';  // Clear baseURL to use the full URL
-            }
-        }
+        // Add proper CORS headers for cross-origin requests
+        config.headers = {
+            ...config.headers,
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        };
         
+        // Log the request for debugging
         console.log(`API Request to: ${config.url}`);
         
         return config;
@@ -183,11 +176,18 @@ API.interceptors.response.use(
         return response;
     },
     (error) => {
+        // Handle specific error types
         if (error.code === 'ERR_NETWORK' || error.code === 'ECONNABORTED') {
             console.error(`Network error - server may be down or unreachable: ${error.code}`, error.message);
             showServerNotRunningMessage();
         } else if (error.response) {
             console.error('Response error:', error.response.status, error.response.data);
+            
+            // Handle CORS errors
+            if (error.response.status === 0) {
+                console.error('CORS error detected - check server configuration');
+                showServerNotRunningMessage();
+            }
             
             // If we get a 401 or 403, the token might be invalid
             if (error.response.status === 401 || error.response.status === 403) {

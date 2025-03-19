@@ -1,49 +1,73 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Button, Typography, Alert, TextField, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
-import { resetConnection, setServerPort } from '../../utils/resetConnection';
-import axios from 'axios';
-import { API_BASE_URL, ENV_INFO, healthCheck } from '../../utils/apiConfig';
+import { Box, Button, Typography, Alert, TextField, Dialog, DialogTitle, DialogContent, DialogActions, CircularProgress } from '@mui/material';
+import { resetConnection } from '../../utils/resetConnection';
+import { healthCheck } from '../../utils/apiConfig';
 
 const ConnectionStatus = () => {
   const [isConnected, setIsConnected] = useState(true);
-  const [serverPort, setServerPort] = useState(localStorage.getItem('serverPort') || '5050');
   const [openDialog, setOpenDialog] = useState(false);
-  const [manualPort, setManualPort] = useState(serverPort);
   const [checkingConnection, setCheckingConnection] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
 
-  // Check connection status periodically
+  // Check connection status
   useEffect(() => {
+    let mounted = true;
+    
     const checkConnection = async () => {
+      if (!mounted) return;
+      
       try {
         setCheckingConnection(true);
         
-        // Use the centralized healthCheck function that respects environment
+        // Use the healthCheck function from apiConfig
         const isHealthy = await healthCheck();
-        setIsConnected(isHealthy);
         
-        // Update local server port state
-        const port = localStorage.getItem('serverPort') || '5050';
-        setServerPort(port);
+        if (mounted) {
+          setIsConnected(isHealthy);
+          if (isHealthy) {
+            setRetryCount(0);
+          } else {
+            setRetryCount(prev => prev + 1);
+          }
+        }
       } catch (error) {
         console.error('Health check failed:', error);
-        setIsConnected(false);
+        if (mounted) {
+          setIsConnected(false);
+          setRetryCount(prev => prev + 1);
+        }
       } finally {
-        setCheckingConnection(false);
+        if (mounted) {
+          setCheckingConnection(false);
+        }
       }
     };
 
     // Check immediately on component mount
     checkConnection();
     
-    // Then check every 30 seconds
+    // Then check periodically
     const interval = setInterval(checkConnection, 30000);
     
-    return () => clearInterval(interval);
+    return () => {
+      mounted = false;
+      clearInterval(interval);
+    };
   }, []);
 
-  const handleResetConnection = () => {
-    resetConnection();
-    window.location.reload();
+  const handleRetryConnection = async () => {
+    setCheckingConnection(true);
+    try {
+      const isHealthy = await healthCheck();
+      setIsConnected(isHealthy);
+      if (isHealthy) {
+        setRetryCount(0);
+      }
+    } catch (error) {
+      console.error('Retry failed:', error);
+    } finally {
+      setCheckingConnection(false);
+    }
   };
 
   const handleOpenDialog = () => {
@@ -54,72 +78,77 @@ const ConnectionStatus = () => {
     setOpenDialog(false);
   };
 
-  const handleSetPort = () => {
-    if (manualPort && !isNaN(parseInt(manualPort))) {
-      setServerPort(manualPort);
-      localStorage.setItem('serverPort', manualPort);
-      setOpenDialog(false);
-      window.location.reload();
-    }
+  const handleResetConnection = () => {
+    resetConnection();
+    window.location.reload();
   };
 
-  // Hide configuration buttons in production
-  const isProduction = ENV_INFO.isProduction;
-  
-  // Only show when there's a connection issue
-  if (isConnected) return null;
+  // Only show when there's a connection issue and we've tried a few times
+  // This prevents showing the alert on temporary network issues
+  if (isConnected || retryCount < 2) return null;
 
   return (
     <Box sx={{ position: 'fixed', bottom: 20, right: 20, zIndex: 9999 }}>
       <Alert 
-        severity="error" 
+        severity="warning" 
         variant="filled"
+        sx={{ 
+          opacity: 0.9,
+          '&:hover': { opacity: 1 },
+          boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
+          maxWidth: '300px'
+        }}
         action={
           <Box>
             <Button 
               color="inherit" 
               size="small" 
-              onClick={handleResetConnection}
+              onClick={handleRetryConnection}
+              disabled={checkingConnection}
+              startIcon={checkingConnection ? <CircularProgress size={14} color="inherit" /> : null}
+            >
+              Retry
+            </Button>
+            <Button 
+              color="inherit" 
+              size="small" 
+              onClick={handleOpenDialog}
               disabled={checkingConnection}
             >
-              Reset
+              Help
             </Button>
-            {!isProduction && (
-              <Button 
-                color="inherit" 
-                size="small" 
-                onClick={handleOpenDialog}
-                disabled={checkingConnection}
-              >
-                Configure
-              </Button>
-            )}
           </Box>
         }
       >
-        {isProduction ? 'API server connection issue detected' : 'Development server connection issue detected'}
+        Server connection issue detected
       </Alert>
 
       <Dialog open={openDialog} onClose={handleCloseDialog}>
-        <DialogTitle>Configure Server Connection</DialogTitle>
+        <DialogTitle>Connection Troubleshooting</DialogTitle>
         <DialogContent>
-          <Typography variant="body2" sx={{ mb: 2 }}>
-            Current server port: {serverPort}
+          <Typography variant="body1" sx={{ mb: 2 }}>
+            We're having trouble connecting to our servers. This could be due to:
           </Typography>
-          <TextField
-            autoFocus
-            margin="dense"
-            label="Server Port"
-            type="number"
-            fullWidth
-            variant="outlined"
-            value={manualPort}
-            onChange={(e) => setManualPort(e.target.value)}
-          />
+          <ul>
+            <li>A temporary server outage</li>
+            <li>Network connectivity issues on your end</li>
+            <li>Server maintenance</li>
+          </ul>
+          <Typography variant="body1" sx={{ mb: 1, mt: 2 }}>
+            You can try these steps:
+          </Typography>
+          <ol>
+            <li>Check your internet connection</li>
+            <li>Refresh the page</li>
+            <li>Try again in a few minutes</li>
+            <li>Clear your browser cache</li>
+          </ol>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseDialog}>Cancel</Button>
-          <Button onClick={handleSetPort}>Save & Reload</Button>
+          <Button onClick={handleCloseDialog}>Close</Button>
+          <Button onClick={handleResetConnection} variant="contained" color="primary">
+            Reset & Reload
+          </Button>
         </DialogActions>
       </Dialog>
     </Box>
