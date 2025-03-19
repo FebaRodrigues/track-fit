@@ -36,6 +36,39 @@ const generateToken = (user) => {
   })).toString('base64');
 };
 
+// Helper to parse request body
+const parseBody = async (req) => {
+  return new Promise((resolve) => {
+    let data = '';
+    
+    // If body is already parsed by Vercel
+    if (req.body) {
+      return resolve(
+        typeof req.body === 'string' 
+          ? JSON.parse(req.body) 
+          : req.body
+      );
+    }
+    
+    req.on('data', chunk => {
+      data += chunk;
+    });
+    
+    req.on('end', () => {
+      try {
+        if (data) {
+          resolve(JSON.parse(data));
+        } else {
+          resolve({});
+        }
+      } catch (e) {
+        console.error('Error parsing request body:', e);
+        resolve({});
+      }
+    });
+  });
+};
+
 module.exports = async (req, res) => {
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Credentials', true);
@@ -57,29 +90,12 @@ module.exports = async (req, res) => {
   }
 
   try {
+    console.log('Registration request received');
+    console.log('Request headers:', req.headers);
+    
     // Parse request body
-    let requestBody = {};
-    
-    try {
-      // If req.body is a string, parse it as JSON
-      if (typeof req.body === 'string') {
-        requestBody = JSON.parse(req.body);
-      } else if (req.body) {
-        // If req.body exists and is an object, use it directly
-        requestBody = req.body;
-      } else if (req.rawBody) {
-        // If req.rawBody exists, parse it as JSON
-        requestBody = JSON.parse(req.rawBody);
-      }
-    } catch (e) {
-      console.error('Error parsing request body:', e);
-      return res.status(400).json({ message: 'Invalid request body' });
-    }
-    
-    console.log('Registration request received', requestBody);
-    
-    // Extract user data from request body
-    const userData = requestBody;
+    const userData = await parseBody(req);
+    console.log('Parsed request body:', userData);
     
     if (!userData.email || !userData.password || !userData.name) {
       return res.status(400).json({ message: 'Name, email, and password are required' });
