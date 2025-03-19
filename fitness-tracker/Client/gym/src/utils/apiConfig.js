@@ -16,6 +16,17 @@ export const getApiUrl = (endpoint) => {
   return `${API_BASE_URL}/${normalizedEndpoint}`;
 };
 
+// Health check function that respects environment
+export const healthCheck = async () => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/health`);
+    return response.ok;
+  } catch (error) {
+    console.error('Health check failed:', error);
+    return false;
+  }
+};
+
 // Export environment information
 export const ENV_INFO = {
   isProduction,
@@ -33,5 +44,6 @@ if (isProduction) {
 export default {
   API_BASE_URL,
   getApiUrl,
-  isProduction
+  isProduction,
+  healthCheck
 }; 

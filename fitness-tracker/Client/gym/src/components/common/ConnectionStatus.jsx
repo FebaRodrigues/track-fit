@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Box, Button, Typography, Alert, TextField, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
 import { resetConnection, setServerPort } from '../../utils/resetConnection';
 import axios from 'axios';
+import { API_BASE_URL, ENV_INFO, healthCheck } from '../../utils/apiConfig';
 
 const ConnectionStatus = () => {
   const [isConnected, setIsConnected] = useState(true);
@@ -15,19 +16,16 @@ const ConnectionStatus = () => {
     const checkConnection = async () => {
       try {
         setCheckingConnection(true);
+        
+        // Use the centralized healthCheck function that respects environment
+        const isHealthy = await healthCheck();
+        setIsConnected(isHealthy);
+        
+        // Update local server port state
         const port = localStorage.getItem('serverPort') || '5050';
         setServerPort(port);
-        
-        const response = await axios.get(`http://localhost:${port}/api/health`, {
-          timeout: 3000
-        });
-        
-        if (response.status === 200) {
-          setIsConnected(true);
-        } else {
-          setIsConnected(false);
-        }
       } catch (error) {
+        console.error('Health check failed:', error);
         setIsConnected(false);
       } finally {
         setCheckingConnection(false);
@@ -65,6 +63,9 @@ const ConnectionStatus = () => {
     }
   };
 
+  // Hide configuration buttons in production
+  const isProduction = ENV_INFO.isProduction;
+  
   // Only show when there's a connection issue
   if (isConnected) return null;
 
@@ -83,18 +84,20 @@ const ConnectionStatus = () => {
             >
               Reset
             </Button>
-            <Button 
-              color="inherit" 
-              size="small" 
-              onClick={handleOpenDialog}
-              disabled={checkingConnection}
-            >
-              Configure
-            </Button>
+            {!isProduction && (
+              <Button 
+                color="inherit" 
+                size="small" 
+                onClick={handleOpenDialog}
+                disabled={checkingConnection}
+              >
+                Configure
+              </Button>
+            )}
           </Box>
         }
       >
-        Server connection issue detected
+        {isProduction ? 'API server connection issue detected' : 'Development server connection issue detected'}
       </Alert>
 
       <Dialog open={openDialog} onClose={handleCloseDialog}>

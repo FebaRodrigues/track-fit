@@ -757,23 +757,15 @@ export const loginUser = async (email, password) => {
         localStorage.removeItem('role');
         localStorage.removeItem('userId');
         
-        // Always use port 5050 for the server
-        const serverPort = '5050';
-        const baseURL = `http://localhost:${serverPort}/api`;
+        console.log(`Attempting login with API_BASE_URL: ${API_BASE_URL}`);
         
-        console.log(`Attempting login with server at ${baseURL}`);
-        
-        // Create a new axios instance for this request to ensure we use the latest port
+        // Create a new axios instance for this request to ensure we use the configured URL
         const loginAPI = axios.create({
-            baseURL,
+            baseURL: API_BASE_URL,
             timeout: 5000 // Longer timeout for login
         });
         
         const response = await loginAPI.post('/users/login', { email, password });
-        
-        // If login is successful, update the API baseURL
-        updateServerPort(serverPort);
-        
         return response;
     } catch (error) {
         console.error('Login error:', error);
@@ -785,7 +777,8 @@ export const loginUser = async (email, password) => {
         
         // Provide a more user-friendly error message for server connection issues
         if (error.code === 'ERR_NETWORK') {
-            throw new Error('Cannot connect to server. Please check if the server is running on port 5050.');
+            const environment = ENV_INFO.isProduction ? 'production' : 'development';
+            throw new Error(`Cannot connect to server (${environment} mode). Please check your connection.`);
         }
         
         throw error;
@@ -794,15 +787,11 @@ export const loginUser = async (email, password) => {
 
 export const registerUser = async (data) => {
     try {
-        // Always use port 5050 for the server
-        const serverPort = '5050';
-        const baseURL = `http://localhost:${serverPort}/api`;
+        console.log(`Attempting registration with API_BASE_URL: ${API_BASE_URL}`);
         
-        console.log(`Attempting registration with server at ${baseURL}`);
-        
-        // Create a new axios instance for this request to ensure we use the latest port
+        // Create a new axios instance for this request
         const registerAPI = axios.create({
-            baseURL,
+            baseURL: API_BASE_URL,
             timeout: 10000 // Longer timeout for registration with image upload
         });
         
@@ -825,9 +814,6 @@ export const registerUser = async (data) => {
             }
         });
         
-        // If registration is successful, update the API baseURL
-        updateServerPort(serverPort);
-        
         return response;
     } catch (error) {
         console.error('Registration error:', error);
@@ -839,29 +825,8 @@ export const registerUser = async (data) => {
         
         // Provide a more user-friendly error message for server connection issues
         if (error.code === 'ERR_NETWORK') {
-            // Try to detect the server port again
-            try {
-                const detectServerPort = (await import('./utils/serverPortDetector')).default;
-                const port = await detectServerPort();
-                console.log(`Detected server on port ${port}, updating API configuration`);
-                
-                // Try the registration again with the new port
-                const newBaseURL = `http://localhost:${port}/api`;
-                const retryAPI = axios.create({
-                    baseURL: newBaseURL,
-                    timeout: 10000
-                });
-                
-                const retryResponse = await retryAPI.post('/users/register', data, {
-                    headers: {
-                        'Content-Type': data instanceof FormData ? 'multipart/form-data' : 'application/json'
-                    }
-                });
-                return retryResponse;
-            } catch (retryError) {
-                console.error('Retry failed:', retryError);
-                throw new Error('Server connection failed. Please check your internet connection and try again.');
-            }
+            const environment = ENV_INFO.isProduction ? 'production' : 'development';
+            throw new Error(`Cannot connect to server (${environment} mode). Please check your connection and try again.`);
         }
         
         throw error;
