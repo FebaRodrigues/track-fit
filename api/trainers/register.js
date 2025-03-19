@@ -1,37 +1,34 @@
-// API Register Endpoint
+// API Trainer Register Endpoint
 
-// Mock database for users - should match the one in login.js
-const users = [
+// Mock database for trainers - should match the one in login.js
+const trainers = [
   {
     id: 1,
-    name: 'Demo User',
-    email: 'demo@example.com',
-    password: 'password123',
-    role: 'user'
-  },
-  {
-    id: 2,
     name: 'Demo Trainer',
     email: 'trainer@example.com',
     password: 'password123',
-    role: 'trainer'
+    role: 'trainer',
+    specialization: 'Strength Training',
+    experience: '5 years'
   },
   {
-    id: 3,
-    name: 'Demo Admin',
-    email: 'admin@example.com',
+    id: 2,
+    name: 'Jane Smith',
+    email: 'jane@example.com',
     password: 'password123',
-    role: 'admin'
+    role: 'trainer',
+    specialization: 'Yoga',
+    experience: '7 years'
   }
 ];
 
 // Mock JWT token generator
-const generateToken = (user) => {
+const generateToken = (trainer) => {
   // In a real app, use a proper JWT library
   return Buffer.from(JSON.stringify({
-    id: user.id,
-    email: user.email,
-    role: user.role,
+    id: trainer.id,
+    email: trainer.email,
+    role: trainer.role,
     exp: Date.now() + 86400000 // 24 hours
   })).toString('base64');
 };
@@ -81,71 +78,75 @@ module.exports = async (req, res) => {
 
   // Handle OPTIONS request
   if (req.method === 'OPTIONS') {
-    console.log('Received OPTIONS request for register endpoint');
+    console.log('Received OPTIONS request for trainer register endpoint');
     return res.status(200).end();
   }
 
   // Handle GET request for health check
   if (req.method === 'GET') {
-    console.log('Received GET request for register endpoint (health check)');
+    console.log('Received GET request for trainer register endpoint (health check)');
     return res.status(200).json({ 
       status: 'ok',
-      message: 'Register endpoint is working',
-      endpoint: '/api/users/register',
+      message: 'Trainer register endpoint is working',
+      endpoint: '/api/trainers/register',
       methods: ['POST', 'OPTIONS', 'GET']
     });
   }
 
   // Only allow POST requests for actual registration
   if (req.method !== 'POST') {
-    console.log(`Received unsupported method ${req.method} for register endpoint`);
+    console.log(`Received unsupported method ${req.method} for trainer register endpoint`);
     return res.status(405).json({ message: 'Method not allowed' });
   }
 
   try {
-    console.log('Registration request received');
+    console.log('Trainer registration request received');
     console.log('Request method:', req.method);
     console.log('Request headers:', req.headers);
     
     // Parse request body
-    const userData = await parseBody(req);
-    console.log('Parsed request body:', userData);
+    const trainerData = await parseBody(req);
+    console.log('Parsed request body:', trainerData);
     
-    if (!userData.email || !userData.password || !userData.name) {
+    if (!trainerData.email || !trainerData.password || !trainerData.name) {
       return res.status(400).json({ message: 'Name, email, and password are required' });
     }
 
     // Check if email already exists
-    if (users.some(u => u.email === userData.email)) {
+    if (trainers.some(t => t.email === trainerData.email)) {
       return res.status(400).json({ message: 'Email already exists' });
     }
     
-    // Create a new user
-    const newUser = {
-      id: users.length + 1,
-      name: userData.name,
-      email: userData.email,
-      password: userData.password,
-      role: 'user'
+    // Create a new trainer
+    const newTrainer = {
+      id: trainers.length + 1,
+      name: trainerData.name,
+      email: trainerData.email,
+      password: trainerData.password,
+      role: 'trainer',
+      specialization: trainerData.specialization || 'General Fitness',
+      experience: trainerData.experience || '0 years'
     };
     
-    // Add the user to the mock database
-    users.push(newUser);
+    // Add the trainer to the mock database
+    trainers.push(newTrainer);
     
     // Generate a token
-    const token = generateToken(newUser);
+    const token = generateToken(newTrainer);
     
     return res.status(201).json({
       token,
-      user: {
-        id: newUser.id,
-        name: newUser.name,
-        email: newUser.email,
-        role: newUser.role
+      trainer: {
+        id: newTrainer.id,
+        name: newTrainer.name,
+        email: newTrainer.email,
+        role: newTrainer.role,
+        specialization: newTrainer.specialization,
+        experience: newTrainer.experience
       }
     });
   } catch (error) {
-    console.error('Registration error:', error);
+    console.error('Trainer registration error:', error);
     return res.status(500).json({ message: 'Internal server error' });
   }
 }; 

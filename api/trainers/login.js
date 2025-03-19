@@ -1,37 +1,34 @@
-// API Register Endpoint
+// API Trainer Login Endpoint
 
-// Mock database for users - should match the one in login.js
-const users = [
+// Mock database for trainers
+const trainers = [
   {
     id: 1,
-    name: 'Demo User',
-    email: 'demo@example.com',
-    password: 'password123',
-    role: 'user'
-  },
-  {
-    id: 2,
     name: 'Demo Trainer',
     email: 'trainer@example.com',
     password: 'password123',
-    role: 'trainer'
+    role: 'trainer',
+    specialization: 'Strength Training',
+    experience: '5 years'
   },
   {
-    id: 3,
-    name: 'Demo Admin',
-    email: 'admin@example.com',
+    id: 2,
+    name: 'Jane Smith',
+    email: 'jane@example.com',
     password: 'password123',
-    role: 'admin'
+    role: 'trainer',
+    specialization: 'Yoga',
+    experience: '7 years'
   }
 ];
 
 // Mock JWT token generator
-const generateToken = (user) => {
+const generateToken = (trainer) => {
   // In a real app, use a proper JWT library
   return Buffer.from(JSON.stringify({
-    id: user.id,
-    email: user.email,
-    role: user.role,
+    id: trainer.id,
+    email: trainer.email,
+    role: trainer.role,
     exp: Date.now() + 86400000 // 24 hours
   })).toString('base64');
 };
@@ -81,71 +78,66 @@ module.exports = async (req, res) => {
 
   // Handle OPTIONS request
   if (req.method === 'OPTIONS') {
-    console.log('Received OPTIONS request for register endpoint');
+    console.log('Received OPTIONS request for trainer login endpoint');
     return res.status(200).end();
   }
 
   // Handle GET request for health check
   if (req.method === 'GET') {
-    console.log('Received GET request for register endpoint (health check)');
+    console.log('Received GET request for trainer login endpoint (health check)');
     return res.status(200).json({ 
       status: 'ok',
-      message: 'Register endpoint is working',
-      endpoint: '/api/users/register',
+      message: 'Trainer login endpoint is working',
+      endpoint: '/api/trainers/login',
       methods: ['POST', 'OPTIONS', 'GET']
     });
   }
 
-  // Only allow POST requests for actual registration
+  // Only allow POST requests for actual login
   if (req.method !== 'POST') {
-    console.log(`Received unsupported method ${req.method} for register endpoint`);
+    console.log(`Received unsupported method ${req.method} for trainer login endpoint`);
     return res.status(405).json({ message: 'Method not allowed' });
   }
 
   try {
-    console.log('Registration request received');
+    console.log('Trainer login request received');
     console.log('Request method:', req.method);
     console.log('Request headers:', req.headers);
     
     // Parse request body
-    const userData = await parseBody(req);
-    console.log('Parsed request body:', userData);
+    const requestBody = await parseBody(req);
+    console.log('Parsed request body:', requestBody);
     
-    if (!userData.email || !userData.password || !userData.name) {
-      return res.status(400).json({ message: 'Name, email, and password are required' });
+    // Extract credentials
+    const { email, password } = requestBody;
+    
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Email and password are required' });
     }
 
-    // Check if email already exists
-    if (users.some(u => u.email === userData.email)) {
-      return res.status(400).json({ message: 'Email already exists' });
+    // Find the trainer
+    const trainer = trainers.find(t => t.email === email && t.password === password);
+    
+    if (!trainer) {
+      return res.status(401).json({ message: 'Invalid email or password' });
     }
     
-    // Create a new user
-    const newUser = {
-      id: users.length + 1,
-      name: userData.name,
-      email: userData.email,
-      password: userData.password,
-      role: 'user'
-    };
-    
-    // Add the user to the mock database
-    users.push(newUser);
-    
     // Generate a token
-    const token = generateToken(newUser);
+    const token = generateToken(trainer);
     
-    return res.status(201).json({
+    return res.status(200).json({
       token,
-      user: {
-        id: newUser.id,
-        name: newUser.name,
-        email: newUser.email,
-        role: newUser.role
+      trainer: {
+        id: trainer.id,
+        name: trainer.name,
+        email: trainer.email,
+        role: trainer.role,
+        specialization: trainer.specialization,
+        experience: trainer.experience
       }
     });
   } catch (error) {
-    console.error('Registration error:', error);
+    console.error('Trainer login error:', error);
     return res.status(500).json({ message: 'Internal server error' });
   }
 }; 

@@ -36,6 +36,39 @@ const generateToken = (user) => {
   })).toString('base64');
 };
 
+// Helper to parse request body
+const parseBody = async (req) => {
+  return new Promise((resolve) => {
+    let data = '';
+    
+    // If body is already parsed by Vercel
+    if (req.body) {
+      return resolve(
+        typeof req.body === 'string' 
+          ? JSON.parse(req.body) 
+          : req.body
+      );
+    }
+    
+    req.on('data', chunk => {
+      data += chunk;
+    });
+    
+    req.on('end', () => {
+      try {
+        if (data) {
+          resolve(JSON.parse(data));
+        } else {
+          resolve({});
+        }
+      } catch (e) {
+        console.error('Error parsing request body:', e);
+        resolve({});
+      }
+    });
+  });
+};
+
 module.exports = async (req, res) => {
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Credentials', true);
@@ -48,37 +81,37 @@ module.exports = async (req, res) => {
 
   // Handle OPTIONS request
   if (req.method === 'OPTIONS') {
+    console.log('Received OPTIONS request for login endpoint');
     return res.status(200).end();
   }
 
-  // Only allow POST requests
+  // Handle GET request for health check
+  if (req.method === 'GET') {
+    console.log('Received GET request for login endpoint (health check)');
+    return res.status(200).json({ 
+      status: 'ok',
+      message: 'Login endpoint is working',
+      endpoint: '/api/users/login',
+      methods: ['POST', 'OPTIONS', 'GET']
+    });
+  }
+
+  // Only allow POST requests for actual login
   if (req.method !== 'POST') {
+    console.log(`Received unsupported method ${req.method} for login endpoint`);
     return res.status(405).json({ message: 'Method not allowed' });
   }
 
   try {
+    console.log('Login request received');
+    console.log('Request method:', req.method);
+    console.log('Request headers:', req.headers);
+    
     // Parse request body
-    let requestBody = {};
+    const requestBody = await parseBody(req);
+    console.log('Parsed request body:', requestBody);
     
-    try {
-      // If req.body is a string, parse it as JSON
-      if (typeof req.body === 'string') {
-        requestBody = JSON.parse(req.body);
-      } else if (req.body) {
-        // If req.body exists and is an object, use it directly
-        requestBody = req.body;
-      } else if (req.rawBody) {
-        // If req.rawBody exists, parse it as JSON
-        requestBody = JSON.parse(req.rawBody);
-      }
-    } catch (e) {
-      console.error('Error parsing request body:', e);
-      return res.status(400).json({ message: 'Invalid request body' });
-    }
-    
-    console.log('Login request received', requestBody);
-    
-    // Extract credentials from request body
+    // Extract credentials
     const { email, password } = requestBody;
     
     if (!email || !password) {
