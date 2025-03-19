@@ -5,7 +5,7 @@
       "src": "fitness-tracker/Client/gym/package.json",
       "use": "@vercel/static-build",
       "config": {
-        "distDir": "fitness-tracker/Client/gym/dist",
+        "distDir": "dist",
         "buildCommand": "cd fitness-tracker/Client/gym && npm install && npm run build"
       }
     },
