@@ -4,7 +4,9 @@
 const isProduction = window.location.hostname !== 'localhost';
 
 // Set the API base URL based on environment
-export const API_BASE_URL = isProduction ? '/api' : 'http://localhost:5050/api';
+export const API_BASE_URL = isProduction 
+  ? 'https://trackfit-server.onrender.com/api' 
+  : 'http://localhost:5050/api';
 
 // For logging purposes
 console.log(`Using API base URL: ${API_BASE_URL} (${isProduction ? 'production' : 'development'})`);
