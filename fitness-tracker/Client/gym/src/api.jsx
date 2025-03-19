@@ -5,16 +5,18 @@ import { resetPortDetection } from './utils/serverPortDetector';
 // Function to get the server URL with the correct port
 export const getServerUrl = () => {
     // Check if we're in production (Vercel deployment)
-    const useRelativeApi = localStorage.getItem('useRelativeApi') === 'true';
+    const isProduction = window.location.hostname !== 'localhost';
     
-    if (useRelativeApi) {
-        console.log('Using relative API path for production');
+    if (isProduction) {
+        console.log('Production environment detected, using relative API paths');
+        localStorage.setItem('useRelativeApi', 'true');
         return '/api';
     }
     
     // For development, use localhost with port
     console.log('Using localhost API for development');
     localStorage.setItem('serverPort', '5050');
+    localStorage.setItem('useRelativeApi', 'false');
     return 'http://localhost:5050/api';
 };
 
@@ -105,7 +107,7 @@ API.interceptors.request.use(
         // Update baseURL on each request to ensure we're using the latest URL
         const baseUrl = getServerUrl();
         config.baseURL = baseUrl;
-        console.log(`API Request to: ${baseUrl}${config.url}`);
+        console.log(`API Request to: ${config.url}`);
         
         // If server was previously down, but we're trying again, log it
         if (serverStatus.isDown && serverStatus.canCheck() && serverStatus.shouldRetry()) {
@@ -123,14 +125,16 @@ API.interceptors.request.use(
 // Function to update the server port
 export const updateServerPort = (port) => {
     // Check if we should use relative path (production) or localhost (dev)
-    const useRelativeApi = localStorage.getItem('useRelativeApi') === 'true';
+    const isProduction = window.location.hostname !== 'localhost';
     
-    if (useRelativeApi) {
+    if (isProduction) {
         console.log('Setting API to use relative path for production');
+        localStorage.setItem('useRelativeApi', 'true');
         API.defaults.baseURL = '/api';
     } else {
         console.log(`Setting API to use localhost:${port} for development`);
         localStorage.setItem('serverPort', port.toString());
+        localStorage.setItem('useRelativeApi', 'false');
         API.defaults.baseURL = `http://localhost:${port}/api`;
     }
     

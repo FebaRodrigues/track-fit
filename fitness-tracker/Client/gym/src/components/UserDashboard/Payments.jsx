@@ -9,8 +9,17 @@ import useMembershipAccess from '../../hooks/useMembershipAccess';
 import '../../styles/Payments.css';
 import axios from 'axios';
 
-// Initialize Stripe outside component
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
+// Get the Stripe key from environment or use a placeholder in development
+const stripeKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || 'pk_test_placeholder';
+console.log('Using Stripe key:', stripeKey ? 'Key available' : 'Key missing');
+
+// Initialize Stripe with error handling
+const stripePromise = stripeKey 
+  ? loadStripe(stripeKey).catch(err => {
+      console.error('Stripe initialization error:', err);
+      return null;
+    })
+  : Promise.resolve(null);
 
 const Payments = () => {
   const { user, fetchMembership, membership } = useContext(AuthContext);
