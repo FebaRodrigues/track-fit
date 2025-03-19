@@ -1,13 +1,8 @@
 {
   "version": 2,
+  "buildCommand": "cd fitness-tracker/Client/gym && npm install && npm run build",
+  "outputDirectory": "fitness-tracker/Client/gym/dist",
   "builds": [
-    {
-      "src": "fitness-tracker/Client/gym/**",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "fitness-tracker/Client/gym/dist"
-      }
-    },
     {
       "src": "fitness-tracker/Server/server.js",
       "use": "@vercel/node"
@@ -19,8 +14,11 @@
       "dest": "fitness-tracker/Server/server.js"
     },
     {
+      "handle": "filesystem"
+    },
+    {
       "src": "/(.*)",
-      "dest": "fitness-tracker/Client/gym/$1"
+      "dest": "fitness-tracker/Client/gym/dist/$1"
     }
   ]
 } 
