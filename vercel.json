@@ -4,5 +4,10 @@
   ],
   "env": {
     "VITE_USE_CORS_PROXY": "true"
+  },
+  "build": {
+    "env": {
+      "VITE_USE_CORS_PROXY": "true"
+    }
   }
 } 

@@ -3,8 +3,12 @@
 // Determine if we're in production environment
 const isProduction = window.location.hostname !== 'localhost';
 
-// Check if we should use CORS proxy
-const useCorsProxy = import.meta.env.VITE_USE_CORS_PROXY === 'true';
+// Check if we should use CORS proxy - ensure we handle the value correctly
+const corsProxyEnv = import.meta.env.VITE_USE_CORS_PROXY || 'false';
+console.log('CORS proxy env value:', corsProxyEnv);
+
+// Force enable CORS proxy in production for now due to CORS issues
+const useCorsProxy = isProduction ? true : (corsProxyEnv === 'true');
 
 // CORS proxy URL
 const CORS_PROXY = 'https://corsproxy.io/?';
