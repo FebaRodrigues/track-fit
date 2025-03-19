@@ -1,32 +1,11 @@
 // API Trainer Login Endpoint
-
-// Mock database for trainers
-const trainers = [
-  {
-    id: 1,
-    name: 'Demo Trainer',
-    email: 'trainer@example.com',
-    password: 'password123',
-    role: 'trainer',
-    specialization: 'Strength Training',
-    experience: '5 years'
-  },
-  {
-    id: 2,
-    name: 'Jane Smith',
-    email: 'jane@example.com',
-    password: 'password123',
-    role: 'trainer',
-    specialization: 'Yoga',
-    experience: '7 years'
-  }
-];
+const { getCollection, COLLECTIONS } = require('../utils/database');
 
 // Mock JWT token generator
 const generateToken = (trainer) => {
   // In a real app, use a proper JWT library
   return Buffer.from(JSON.stringify({
-    id: trainer.id,
+    id: trainer._id.toString(),
     email: trainer.email,
     role: trainer.role,
     exp: Date.now() + 86400000 // 24 hours
@@ -115,12 +94,22 @@ module.exports = async (req, res) => {
       return res.status(400).json({ message: 'Email and password are required' });
     }
 
-    // Find the trainer
-    const trainer = trainers.find(t => t.email === email && t.password === password);
+    // Get the trainers collection from MongoDB
+    const trainersCollection = await getCollection(COLLECTIONS.TRAINERS);
+    console.log('Connected to trainers collection');
+
+    // Find the trainer by email and password
+    const trainer = await trainersCollection.findOne({ 
+      email,
+      password // Note: In a real app, you'd compare hashed passwords
+    });
     
     if (!trainer) {
+      console.log(`Trainer not found for email: ${email}`);
       return res.status(401).json({ message: 'Invalid email or password' });
     }
+    
+    console.log(`Trainer found: ${trainer.name} (${trainer.email})`);
     
     // Generate a token
     const token = generateToken(trainer);
@@ -128,16 +117,16 @@ module.exports = async (req, res) => {
     return res.status(200).json({
       token,
       trainer: {
-        id: trainer.id,
+        id: trainer._id.toString(),
         name: trainer.name,
         email: trainer.email,
         role: trainer.role,
-        specialization: trainer.specialization,
-        experience: trainer.experience
+        specialization: trainer.specialization || 'General Fitness',
+        experience: trainer.experience || '0 years'
       }
     });
   } catch (error) {
     console.error('Trainer login error:', error);
-    return res.status(500).json({ message: 'Internal server error' });
+    return res.status(500).json({ message: 'Internal server error', error: error.message });
   }
 }; 

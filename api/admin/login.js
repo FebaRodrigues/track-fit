@@ -1,14 +1,13 @@
-// API Register Endpoint
+// API Admin Login Endpoint
 const { getCollection, COLLECTIONS } = require('../utils/database');
-const { ObjectId } = require('mongodb');
 
 // Mock JWT token generator
-const generateToken = (user) => {
+const generateToken = (admin) => {
   // In a real app, use a proper JWT library
   return Buffer.from(JSON.stringify({
-    id: user._id.toString(),
-    email: user.email,
-    role: user.role,
+    id: admin._id.toString(),
+    email: admin.email,
+    role: admin.role,
     exp: Date.now() + 86400000 // 24 hours
   })).toString('base64');
 };
@@ -58,79 +57,74 @@ module.exports = async (req, res) => {
 
   // Handle OPTIONS request
   if (req.method === 'OPTIONS') {
-    console.log('Received OPTIONS request for register endpoint');
+    console.log('Received OPTIONS request for admin login endpoint');
     return res.status(200).end();
   }
 
   // Handle GET request for health check
   if (req.method === 'GET') {
-    console.log('Received GET request for register endpoint (health check)');
+    console.log('Received GET request for admin login endpoint (health check)');
     return res.status(200).json({ 
       status: 'ok',
-      message: 'Register endpoint is working',
-      endpoint: '/api/users/register',
+      message: 'Admin login endpoint is working',
+      endpoint: '/api/admin/login',
       methods: ['POST', 'OPTIONS', 'GET']
     });
   }
 
-  // Only allow POST requests for actual registration
+  // Only allow POST requests for actual login
   if (req.method !== 'POST') {
-    console.log(`Received unsupported method ${req.method} for register endpoint`);
+    console.log(`Received unsupported method ${req.method} for admin login endpoint`);
     return res.status(405).json({ message: 'Method not allowed' });
   }
 
   try {
-    console.log('Registration request received');
+    console.log('Admin login request received');
     console.log('Request method:', req.method);
     console.log('Request headers:', req.headers);
     
     // Parse request body
-    const userData = await parseBody(req);
-    console.log('Parsed request body:', userData);
+    const requestBody = await parseBody(req);
+    console.log('Parsed request body:', requestBody);
     
-    if (!userData.email || !userData.password || !userData.name) {
-      return res.status(400).json({ message: 'Name, email, and password are required' });
+    // Extract credentials
+    const { email, password } = requestBody;
+    
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Email and password are required' });
     }
 
-    // Get the users collection from MongoDB
-    const usersCollection = await getCollection(COLLECTIONS.USERS);
-    console.log('Connected to users collection');
+    // Get the admins collection from MongoDB
+    const adminsCollection = await getCollection(COLLECTIONS.ADMINS);
+    console.log('Connected to admins collection');
 
-    // Check if email already exists
-    const existingUser = await usersCollection.findOne({ email: userData.email });
-    if (existingUser) {
-      console.log(`Email already exists: ${userData.email}`);
-      return res.status(400).json({ message: 'Email already exists' });
+    // Find the admin by email and password
+    const admin = await adminsCollection.findOne({ 
+      email,
+      password // Note: In a real app, you'd compare hashed passwords
+    });
+    
+    if (!admin) {
+      console.log(`Admin not found for email: ${email}`);
+      return res.status(401).json({ message: 'Invalid email or password' });
     }
     
-    // Create a new user document
-    const newUser = {
-      _id: new ObjectId(),
-      name: userData.name,
-      email: userData.email,
-      password: userData.password, // Note: In a real app, you'd hash this password
-      role: 'user',
-      createdAt: new Date()
-    };
-    
-    // Insert the new user into the database
-    const result = await usersCollection.insertOne(newUser);
-    console.log(`New user created: ${newUser.name} (${newUser.email})`);
+    console.log(`Admin found: ${admin.name} (${admin.email})`);
     
     // Generate a token
-    const token = generateToken(newUser);
+    const token = generateToken(admin);
     
-    return res.status(201).json({
+    return res.status(200).json({
       token,
-      user: {
-        id: newUser._id.toString(),
-        name: newUser.name,
-        email: newUser.email,
-        role: newUser.role
+      admin: {
+        id: admin._id.toString(),
+        name: admin.name,
+        email: admin.email,
+        role: admin.role
       }
     });
   } catch (error) {
-    console.error('Registration error:', error);
+    console.error('Admin login error:', error);
     return res.status(500).json({ message: 'Internal server error', error: error.message });
   }
 }; 

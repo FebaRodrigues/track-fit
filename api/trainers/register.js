@@ -1,32 +1,12 @@
 // API Trainer Register Endpoint
-
-// Mock database for trainers - should match the one in login.js
-const trainers = [
-  {
-    id: 1,
-    name: 'Demo Trainer',
-    email: 'trainer@example.com',
-    password: 'password123',
-    role: 'trainer',
-    specialization: 'Strength Training',
-    experience: '5 years'
-  },
-  {
-    id: 2,
-    name: 'Jane Smith',
-    email: 'jane@example.com',
-    password: 'password123',
-    role: 'trainer',
-    specialization: 'Yoga',
-    experience: '7 years'
-  }
-];
+const { getCollection, COLLECTIONS } = require('../utils/database');
+const { ObjectId } = require('mongodb');
 
 // Mock JWT token generator
 const generateToken = (trainer) => {
   // In a real app, use a proper JWT library
   return Buffer.from(JSON.stringify({
-    id: trainer.id,
+    id: trainer._id.toString(),
     email: trainer.email,
     role: trainer.role,
     exp: Date.now() + 86400000 // 24 hours
@@ -112,24 +92,32 @@ module.exports = async (req, res) => {
       return res.status(400).json({ message: 'Name, email, and password are required' });
     }
 
+    // Get the trainers collection from MongoDB
+    const trainersCollection = await getCollection(COLLECTIONS.TRAINERS);
+    console.log('Connected to trainers collection');
+
     // Check if email already exists
-    if (trainers.some(t => t.email === trainerData.email)) {
+    const existingTrainer = await trainersCollection.findOne({ email: trainerData.email });
+    if (existingTrainer) {
+      console.log(`Email already exists: ${trainerData.email}`);
       return res.status(400).json({ message: 'Email already exists' });
     }
     
-    // Create a new trainer
+    // Create a new trainer document
     const newTrainer = {
-      id: trainers.length + 1,
+      _id: new ObjectId(),
       name: trainerData.name,
       email: trainerData.email,
-      password: trainerData.password,
+      password: trainerData.password, // Note: In a real app, you'd hash this password
       role: 'trainer',
       specialization: trainerData.specialization || 'General Fitness',
-      experience: trainerData.experience || '0 years'
+      experience: trainerData.experience || '0 years',
+      createdAt: new Date()
     };
     
-    // Add the trainer to the mock database
-    trainers.push(newTrainer);
+    // Insert the new trainer into the database
+    const result = await trainersCollection.insertOne(newTrainer);
+    console.log(`New trainer created: ${newTrainer.name} (${newTrainer.email})`);
     
     // Generate a token
     const token = generateToken(newTrainer);
@@ -137,7 +125,7 @@ module.exports = async (req, res) => {
     return res.status(201).json({
       token,
       trainer: {
-        id: newTrainer.id,
+        id: newTrainer._id.toString(),
         name: newTrainer.name,
         email: newTrainer.email,
         role: newTrainer.role,
@@ -147,6 +135,6 @@ module.exports = async (req, res) => {
     });
   } catch (error) {
     console.error('Trainer registration error:', error);
-    return res.status(500).json({ message: 'Internal server error' });
+    return res.status(500).json({ message: 'Internal server error', error: error.message });
   }
 }; 
